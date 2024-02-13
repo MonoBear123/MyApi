@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/MonoBear123/MyApi/application"
+	"github.com/MonoBear123/MyApi/server/application"
 )
 
 func main() {
@@ -14,7 +14,8 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	err := app.Start(ctx)
 	if err != nil {
-		log.Fatal("server isn`t starting")
+		log.Fatal(err)
+
 	}
 	defer cancel()
 }

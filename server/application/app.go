@@ -35,6 +35,7 @@ func (a *App) Start(ctx context.Context) error {
 			fmt.Print("redis close")
 		}
 	}()
+
 	ch := make(chan error, 1)
 	fmt.Println("Starting server ")
 	go func() {
@@ -46,7 +47,7 @@ func (a *App) Start(ctx context.Context) error {
 	}()
 	select {
 	case <-ctx.Done():
-		timeout, canel := context.WithTimeout(context.Background(), time.Second*10)
+		timeout, canel := context.WithTimeout(context.Background(), time.Second*1000)
 		defer canel()
 		return server.Shutdown(timeout)
 

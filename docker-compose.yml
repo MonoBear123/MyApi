@@ -1,0 +1,38 @@
+version: '3'
+services:
+  server:
+    build: 
+      context: .
+      dockerfile: Dockerfile.orchestor
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    networks:
+      - my_network
+    restart: always
+    volumes:
+      - ./data:/app/data  # Монтируем папку для сохранения данных
+    
+
+  agent:
+    build: 
+      context: .
+      dockerfile: Dockerfile.agent
+    depends_on:
+      - server
+    networks:
+      - my_network
+    deploy:
+      replicas: 3
+    restart: always
+  
+
+  redis:
+    image: "redis:latest"
+    volumes:
+      - ./data:/data # Монтируем папку для сохранения данных Redis
+    restart: always 
+
+networks:
+  my_network:
