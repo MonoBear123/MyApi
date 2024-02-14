@@ -1,6 +1,11 @@
 FROM golang:latest
 WORKDIR /app
+# Копируем только go.mod и go.sum, чтобы воспользоваться кэшированием при сборке
+COPY go.mod .
+COPY go.sum .
 
+# Устанавливаем зависимости
+RUN go mod download
 COPY . .
 
 CMD ["go", "run", "server/agent/agent.go"]

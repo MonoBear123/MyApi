@@ -1,5 +1,12 @@
 version: '3'
 services:
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data:/data # Монтируем папку для сохранения данных Redis
+    #restart: always 
   server:
     build: 
       context: .
@@ -10,7 +17,7 @@ services:
       - redis
     networks:
       - my_network
-    restart: always
+    #restart: always
     volumes:
       - ./data:/app/data  # Монтируем папку для сохранения данных
     
@@ -20,19 +27,16 @@ services:
       context: .
       dockerfile: Dockerfile.agent
     depends_on:
+      - redis
       - server
     networks:
       - my_network
     deploy:
-      replicas: 3
-    restart: always
+      replicas: 2
+    #restart: always
   
 
-  redis:
-    image: "redis:latest"
-    volumes:
-      - ./data:/data # Монтируем папку для сохранения данных Redis
-    restart: always 
+  
 
 networks:
   my_network:

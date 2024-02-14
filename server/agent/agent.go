@@ -1,4 +1,4 @@
-package agent
+package main
 
 import (
 	"bytes"
@@ -11,10 +11,10 @@ import (
 	"github.com/MonoBear123/MyApi/back/model"
 )
 
-func agent() {
+func main() {
 	serverURL := "http://localhost:8080/setstatus" // Замените на правильный адрес вашего сервера
 	id := rand.Uint64()
-	out := model.Requert{Id: id, Status: "OK",Time:time.Now()}
+	out := model.Requert{Id: id, Status: "OK", Time: time.Now()}
 	res, err := json.Marshal(out)
 	if err != nil {
 		return
