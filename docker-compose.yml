@@ -9,12 +9,13 @@ services:
     networks:
       - my_network
     #restart: always 
+
   server:
     build: 
       context: .
       dockerfile: Dockerfile.orchestor
     ports:
-      - "8080:8080"
+      - "8041:8041"
     depends_on:
       - redis
     networks:
@@ -22,7 +23,6 @@ services:
     #restart: always
     volumes:
       - ./data:/app/dataserver  # Монтируем папку для сохранения данных
-    
 
   agent:
     build: 
@@ -34,11 +34,9 @@ services:
     networks:
       - my_network
     deploy:
-      replicas: 2
+      replicas: 3
     #restart: always
-  
-
-  
 
 networks:
   my_network:
+    driver: bridge

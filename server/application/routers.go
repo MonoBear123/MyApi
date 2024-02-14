@@ -16,7 +16,6 @@ func (a *App) loadRoutes() {
 		w.Write([]byte("welcome"))
 	})
 
-	//router.Handle("/front/*", http.StripPrefix("/front/", http.FileServer(http.Dir("/front/index.html"))))
 	router.Route("/", a.loadExpressionRoutes)
 	a.router = router
 
@@ -27,6 +26,7 @@ func (a *App) loadExpressionRoutes(router chi.Router) {
 			Client: a.rdb,
 		},
 	}
+
 	router.Post("/set", ExpressionHandler.SetExpression)
 	router.Get("/get/{id}", ExpressionHandler.GetExpressionByID)
 	router.Post("/setstatus", ExpressionHandler.SetAgentStatus)

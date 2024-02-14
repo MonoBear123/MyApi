@@ -17,29 +17,25 @@ func ParseExpressionToTree(s string) (*model.Node, error) {
 		operatorStack []string
 	)
 
-	// Функция, определяющая, является ли символ оператором
 	isOperator := func(char string) bool {
 		return strings.ContainsAny(char, "+-*/")
 	}
 
-	// Функция для определения приоритета оператора
 	precedence := map[string]int{
 		"+": 1,
 		"-": 1,
 		"*": 2,
 		"/": 2,
 	}
+
 	scribe := 0
-	// Проход по каждому символу в выражении
 	for _, char := range s {
 		token := string(char)
 
-		// Пропускаем пробелы
 		if unicode.IsSpace(char) {
 			continue
 		}
 
-		// Проверяем, является ли символ допустимым
 		if !(unicode.IsDigit(char) || isOperator(token) || token == "(" || token == ")") {
 			return nil, errors.New("недопустимый символ в выражении")
 		}

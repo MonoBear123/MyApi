@@ -8,12 +8,14 @@ type EXpression struct {
 	Tree        *Node   `json:"tree"`
 	Num         float64 `json:"num"`
 }
+
 type Node struct {
 	Left     *Node
 	Right    *Node
 	Operator string
 	Value    float64
 }
+
 type Requert struct {
 	Id     uint64    `json:"id"`
 	Status string    `json:"status"`

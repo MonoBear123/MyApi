@@ -19,4 +19,4 @@ RUN go build -o main .
 CMD ["./main"]
 
 # Экспонируем порт, на котором работает приложение
-EXPOSE 8080
+EXPOSE 8041

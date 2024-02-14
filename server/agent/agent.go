@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -12,25 +11,26 @@ import (
 )
 
 func main() {
-	serverURL := "http://localhost:8080/setstatus" // Замените на правильный адрес вашего сервера
+	client := &http.Client{}
 	id := rand.Uint64()
-	out := model.Requert{Id: id, Status: "OK", Time: time.Now()}
-	res, err := json.Marshal(out)
-	if err != nil {
-		return
-	}
-	for {
-		// Формируем JSON с данными о статусе агента
 
-		// Отправляем POST запрос на сервер
-		response, err := http.Post(serverURL, "application/json", bytes.NewBuffer(res))
+	for i := 0; i < 5; i++ {
+		res, err := json.Marshal(model.Requert{Id: id, Status: "OK", Time: time.Now()})
+		req, err := http.NewRequest("POST", "http://server:8041/setstatus", bytes.NewBuffer(res))
+		req.Header.Set("Content-Type", "application/json")
+
 		if err != nil {
-			fmt.Println("Error connecting to the server:", err)
-		} else {
-
-			fmt.Println("Server Status:", response.Status)
+			return
 		}
 
-		time.Sleep(5 * time.Second) // Пауза перед следующим запросом
+		resp, err := client.Do(req)
+
+		if err != nil {
+			panic(err)
+		}
+
+		defer resp.Body.Close()
+
+		time.Sleep(3 * time.Second)
 	}
 }
