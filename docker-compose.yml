@@ -5,7 +5,9 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ./data:/data # Монтируем папку для сохранения данных Redis
+      - ./data:/app/dataredis # Монтируем папку для сохранения данных Redis
+    networks:
+      - my_network
     #restart: always 
   server:
     build: 
@@ -19,7 +21,7 @@ services:
       - my_network
     #restart: always
     volumes:
-      - ./data:/app/data  # Монтируем папку для сохранения данных
+      - ./data:/app/dataserver  # Монтируем папку для сохранения данных
     
 
   agent:
