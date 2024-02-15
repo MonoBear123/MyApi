@@ -28,21 +28,19 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte(body.Expression1))
-	parsedExpression, err := expression.ParseExpressionToTree(body.Expression1)
+	parsedExpression, err := expression.ParseExpression(body.Expression1)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("%s", err)))
 		return
 	}
-
-	num := expression.EvaluateExpression(parsedExpression)
+	id := rand.Uint64()
 	out := model.EXpression{
 		Expression:  body.Expression1,
-		ExpressinID: rand.Uint64(),
-		Tree:        parsedExpression,
-		Num:         num,
+		ExpressinID: id,
+		ParsedEx:    parsedExpression,
 	}
-
+	o.Repo.Distribution(parsedExpression, fmt.Sprint(id))
 	err = o.Repo.Insert(r.Context(), out)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -1,112 +1,82 @@
 package expression
 
 import (
-	"errors"
-	"fmt"
-	"strconv"
-	"strings"
-	"unicode"
+	"context"
+	"encoding/json"
+	"time"
 
-	"github.com/MonoBear123/MyApi/back/model"
+	"fmt"
+	"log"
+	"strings"
+
+	shuntingYard "github.com/mgenware/go-shunting-yard"
 )
 
-// ParseExpressionToTree парсит математическое выражение в постфиксную форму и строит дерево
-func ParseExpressionToTree(s string) (*model.Node, error) {
-	var (
-		outputQueue   []string
-		operatorStack []string
-	)
-
-	isOperator := func(char string) bool {
-		return strings.ContainsAny(char, "+-*/")
+func ParseExpression(expr string) ([]*shuntingYard.RPNToken, error) {
+	infixTokens, err := shuntingYard.Scan(expr)
+	if err != nil {
+		return nil, err
 	}
 
-	precedence := map[string]int{
-		"+": 1,
-		"-": 1,
-		"*": 2,
-		"/": 2,
+	postfixTokens, err := shuntingYard.Parse(infixTokens)
+	if err != nil {
+		return nil, err
 	}
 
-	scribe := 0
-	for _, char := range s {
-		token := string(char)
+	return postfixTokens, nil
+}
+func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id string) {
+	for len(expression) != 1 {
+		for index := 0; index < len(expression)-3; index++ {
+			if !strings.ContainsAny(fmt.Sprintf("%v", expression[index].Value), "+-/*^") && !strings.ContainsAny(fmt.Sprintf("%v", expression[index+1].Value), "+-/*^") && strings.ContainsAny(fmt.Sprintf("%v", expression[index+2].Value), "+-/*^") {
 
-		if unicode.IsSpace(char) {
-			continue
+				err := r.EnqueueMessage("my_queue", []interface{}{expression[index].Value, expression[index+1].Value, expression[index+2].Value, id, index})
+				if err != nil {
+					log.Fatal(err)
+				}
+				expression[index].Value = "."
+				expression[index+1].Value = "."
+				expression[index+2].Value = "."
+
+			}
+
 		}
-
-		if !(unicode.IsDigit(char) || isOperator(token) || token == "(" || token == ")") {
-			return nil, errors.New("недопустимый символ в выражении")
-		}
-
-		// Если символ - число, добавляем его в очередь вывода
-		if unicode.IsDigit(char) {
-			outputQueue = append(outputQueue, token)
-		} else if isOperator(token) {
-			// Если символ - оператор, обрабатываем стек операторов
-			for len(operatorStack) > 0 && precedence[operatorStack[len(operatorStack)-1]] >= precedence[token] {
-				outputQueue = append(outputQueue, operatorStack[len(operatorStack)-1])
-				operatorStack = operatorStack[:len(operatorStack)-1]
-			}
-			operatorStack = append(operatorStack, token)
-		} else if token == "(" {
-			scribe++
-			// Есл	и символ - открывающая скобка, добавляем её в стек операторов
-			operatorStack = append(operatorStack, token)
-		} else if token == ")" {
-			if scribe < 0 {
-				return &model.Node{}, fmt.Errorf("error")
-			}
-			scribe--
-			// Если символ - закрывающая скобка, выталкиваем операторы из стека в очередь до открывающей скобки
-			for len(operatorStack) > 0 && operatorStack[len(operatorStack)-1] != "(" {
-				outputQueue = append(outputQueue, operatorStack[len(operatorStack)-1])
-				operatorStack = operatorStack[:len(operatorStack)-1]
-			}
-			// Убираем открывающую скобку из стека
-			if len(operatorStack) > 0 && operatorStack[len(operatorStack)-1] == "(" {
-				operatorStack = operatorStack[:len(operatorStack)-1]
-			} else {
-				return nil, errors.New("неверное выражение, лишняя закрывающая скобка")
-			}
-		}
-	}
-
-	// Оставшиеся операторы добавляем в очередь вывода
-	for len(operatorStack) > 0 {
-		outputQueue = append(outputQueue, operatorStack[len(operatorStack)-1])
-		operatorStack = operatorStack[:len(operatorStack)-1]
-	}
-
-	// Строим дерево из постфиксной формы
-	var nodeStack []*model.Node
-	for _, token := range outputQueue {
-		if unicode.IsDigit(rune(token[0])) {
-			// Если токен - число, добавляем его в стек нод
-			value, err := strconv.ParseFloat(token, 64)
+		//тут будет тайслип на время выполнения операций
+		time.Sleep(100 * time.Second)
+		for {
+			newEX, err := r.DequeueMessage(id)
 			if err != nil {
-				return nil, err
+				break
 			}
-			nodeStack = append(nodeStack, &model.Node{Value: value})
-		} else if isOperator(token) {
-			// Если токен - оператор, выталкиваем две верхние ноды из стека и создаем новую с оператором
-			if len(nodeStack) < 2 {
-				return nil, errors.New("неверное количество операндов для оператора")
-			}
-			right := nodeStack[len(nodeStack)-1]
-			nodeStack = nodeStack[:len(nodeStack)-1]
-			left := nodeStack[len(nodeStack)-1]
-			nodeStack = nodeStack[:len(nodeStack)-1]
-			node := &model.Node{Left: left, Right: right, Operator: token}
-			nodeStack = append(nodeStack, node)
+			expression[newEX[1].(int)].Value = newEX[0]
+			expression = append(expression[:newEX[1].(int)], expression[newEX[1].(int)+2:]...)
+
+			r.Client.JSONSet(context.Background(), id, ".", fmt.Sprintf(`{"parsedex":"%v"}`, expression))
 		}
+
 	}
 
-	// В конечном итоге в стеке должна остаться только одна нода - корень дерева
-	if len(nodeStack) != 1 || scribe != 0 {
-		return nil, errors.New("неверное количество нод в дереве")
+	r.Client.JSONSet(context.Background(), id, ".", fmt.Sprintf(`{"result":"%v"}`, expression))
+}
+func (r *RedisRepo) EnqueueMessage(name string, subEx []interface{}) error {
+	ctx := context.Background()
+	err := r.Client.LPush(ctx, name, subEx)
+	if err != nil {
+		return fmt.Errorf("ошибка в очереди")
+	}
+	return nil
+}
+func (r *RedisRepo) DequeueMessage(name string) ([]interface{}, error) {
+	result, err := r.Client.LPop(context.Background(), name).Result()
+	if err != nil {
+		return nil, fmt.Errorf("ошибка в очереди: %v", err)
 	}
 
-	return nodeStack[0], nil
+	var expression []interface{}
+	err = json.Unmarshal([]byte(result), &expression)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка распаковки JSON: %v", err)
+	}
+
+	return expression, nil
 }
