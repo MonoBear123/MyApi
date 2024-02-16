@@ -12,12 +12,8 @@ import (
 	"time"
 
 	"github.com/MonoBear123/MyApi/back/model"
-	"github.com/MonoBear123/MyApi/back/repository/expression"
+	"github.com/redis/go-redis/v9"
 )
-
-type Req struct {
-	Repo *expression.RedisRepo
-}
 
 const (
 	MaxWorkers      = 8
@@ -32,11 +28,23 @@ var (
 
 func main() {
 	client := &http.Client{}
+	options := &redis.Options{
+		Addr: "redis:6379", // замените на реальный адрес
+
+	}
+	clientRedis := redis.NewClient(options)
 	id := rand.Uint64()
 	go sendHeartbeat(client, "http://server:8041/setstatus", id)
-	req := &Req{Repo: &expression.RedisRepo{}}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := clientRedis.Ping(ctx).Err(); err != nil {
+		fmt.Print("не подлючен к редис")
+	}
+
+	fmt.Println("Успешное подключение к Redis")
 	for {
-		expression, err := req.LockQueue("my_queue")
+		expression, err := LockQueue("my_queue", clientRedis)
 		if err != nil {
 			continue
 		}
@@ -84,7 +92,7 @@ func main() {
 				res = math.Pow(num1, num2)
 			}
 			time.Sleep(100 * time.Second)
-			req.Repo.Client.LPush(context.Background(), expression[4].(string), []interface{}{res, expression[4]})
+			clientRedis.LPush(context.Background(), expression[4].(string), []interface{}{res, expression[4]})
 		}(expression)
 
 	}
@@ -117,11 +125,11 @@ func sendHeartbeat(client *http.Client, url string, id uint64) {
 	}
 }
 
-func (r *Req) LockQueue(queueName string) ([]interface{}, error) {
+func LockQueue(queueName string, client *redis.Client) ([]interface{}, error) {
 	ctx := context.Background()
 	lockKey := queueName + "_lock"
 	lockValue := "locked"
-	lockSet, err := r.Repo.Client.SetNX(ctx, lockKey, lockValue, time.Second).Result()
+	lockSet, err := client.SetNX(ctx, lockKey, lockValue, time.Second).Result()
 	if err != nil {
 		return nil, fmt.Errorf("ошибка при установке блокировки: %v", err)
 	}
@@ -131,11 +139,11 @@ func (r *Req) LockQueue(queueName string) ([]interface{}, error) {
 		return nil, fmt.Errorf("12")
 	}
 
-	defer func() {
+	defer func(clientRedis *redis.Client) {
 		// Снимаем блокировку после выполнения задачи
-		r.Repo.Client.Del(ctx, lockKey)
-	}()
-	result, err := r.Repo.Client.LPop(ctx, queueName).Result()
+		clientRedis.Del(ctx, lockKey)
+	}(client)
+	result, err := client.LPop(ctx, queueName).Result()
 	if err != nil {
 		return nil, fmt.Errorf("ошибка в очереди: %v", err)
 	}
