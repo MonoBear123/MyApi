@@ -18,9 +18,11 @@ services:
       - "8041:8041"
     depends_on:
       - redis
+  
+  
     networks:
       - my_network
-    #restart: always
+    restart: always
     volumes:
       - ./data:/app/dataserver  # Монтируем папку для сохранения данных
 
@@ -34,8 +36,8 @@ services:
     networks:
       - my_network
     deploy:
-      replicas: 3
-    #restart: always
+      replicas: 1
+    #restart: 
 
 networks:
   my_network:

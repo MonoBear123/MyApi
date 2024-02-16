@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"net/http"
@@ -16,14 +17,12 @@ import (
 )
 
 const (
-	MaxWorkers      = 8
 	heartbeatPeriod = 15 * time.Second
 )
 
 var (
-	workerSemaphore = make(chan struct{}, MaxWorkers)
-	mutex           sync.Mutex
-	activeWorkers   int
+	mutex         sync.Mutex
+	activeWorkers int
 )
 
 func main() {
@@ -34,7 +33,18 @@ func main() {
 	}
 	clientRedis := redis.NewClient(options)
 	id := rand.Uint64()
-	go sendHeartbeat(client, "http://server:8041/setstatus", id)
+	ConfigJson, err := clientRedis.Get(context.Background(), "config").Result()
+	if err != nil {
+		fmt.Print("не получил конфига ")
+	}
+	config := model.Config{}
+	err = json.Unmarshal([]byte(ConfigJson), &config)
+	if err != nil {
+		fmt.Print("не подлючен к редис")
+	}
+	workerSemaphore := make(chan struct{}, config.MaxGorutines)
+	go sendHeartbeat(client, "http://server:8041/setstatus", id, config.MaxGorutines)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -64,41 +74,49 @@ func main() {
 				mutex.Unlock()
 			}()
 			var res float64
+			var Error string
 			switch expression[2] {
 			case "/":
 				if expression[1] == 0 {
-					return
+					Error = "err"
 				}
+				time.Sleep(time.Second * time.Duration(config.Division))
 				num1 := expression[1].(float64)
 				num2 := expression[0].(float64)
 				res = num1 / num2
 			case "*":
+				time.Sleep(time.Second * time.Duration(config.Multiplication))
 				num1 := expression[1].(float64)
 				num2 := expression[0].(float64)
 				res = num1 * num2
 
 			case "-":
+				time.Sleep(time.Second * time.Duration(config.Minus))
 				num1 := expression[1].(float64)
 				num2 := expression[0].(float64)
 				res = num1 - num2
 
 			case "+":
+				time.Sleep(time.Second * time.Duration(config.Plus))
 				num1 := expression[1].(float64)
 				num2 := expression[0].(float64)
 				res = num1 + num2
 			case "^":
+				time.Sleep(time.Second * time.Duration(config.Construction))
 				num1 := expression[1].(float64)
 				num2 := expression[0].(float64)
 				res = math.Pow(num1, num2)
 			}
-			time.Sleep(100 * time.Second)
-			clientRedis.LPush(context.Background(), expression[4].(string), []interface{}{res, expression[4]})
+
+			log.Print(res)
+			clientRedis.LPush(context.Background(), expression[4].(string), []interface{}{res, expression[4], Error})
+
 		}(expression)
 
 	}
 
 }
-func sendHeartbeat(client *http.Client, url string, id uint64) {
+func sendHeartbeat(client *http.Client, url string, id uint64, MaxWorkers int) {
 	for {
 		res, err := json.Marshal(model.Requert{Id: id, Status: "OK", Time: time.Now(),
 			NumOfWorkers: activeWorkers, MaxNumWorkers: MaxWorkers})

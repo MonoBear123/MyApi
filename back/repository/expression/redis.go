@@ -88,3 +88,19 @@ func (r *RedisRepo) AgentInsert(ctx context.Context, agent model.Requert) error 
 	}
 	return nil
 }
+func (r *RedisRepo) DeleteExpression(name string) error {
+	err := r.Client.Del(context.Background(), name).Err()
+	if err != nil {
+
+		return err
+	}
+	return nil
+}
+func (r *RedisRepo) DeleteAgent(name string) error {
+	err := r.Client.Del(context.Background(), name).Err()
+	if err != nil {
+
+		return err
+	}
+	return nil
+}

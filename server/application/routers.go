@@ -28,8 +28,9 @@ func (a *App) loadExpressionRoutes(router chi.Router) {
 	}
 
 	router.Post("/set", ExpressionHandler.SetExpression)
-	router.Get("/get/{id}", ExpressionHandler.GetExpressionByID)
+
 	router.Post("/setstatus", ExpressionHandler.SetAgentStatus)
 	router.Get("/getstatus", ExpressionHandler.GetAgentStatus)
+	router.Get("/config", ExpressionHandler.UpdateConfigHandler)
 
 }

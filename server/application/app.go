@@ -20,7 +20,7 @@ func New() *App {
 			Addr: "redis:6379",
 		}),
 	}
-
+	app.loadConfig()
 	app.loadRoutes()
 	return app
 }

@@ -20,3 +20,11 @@ type Requert struct {
 	NumOfWorkers  int       `json:"numofworkers"`
 	MaxNumWorkers int       `json:"maxnumworkers"`
 }
+type Config struct {
+	Plus           int `json:"+" env-default:"100"`
+	Minus          int `json:"-" env-default:"100"`
+	Division       int `json:"/" env-default:"100"`
+	Multiplication int `json:"*" env-default:"100"`
+	Construction   int `json:"^" env-default:"100"`
+	MaxGorutines   int `json:"gorutines" env-default:"10"`
+}

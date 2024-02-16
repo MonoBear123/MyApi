@@ -1,16 +1,15 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/MonoBear123/MyApi/back/model"
 	"github.com/MonoBear123/MyApi/back/repository/expression"
-	"github.com/go-chi/chi"
 )
 
 type Expression struct {
@@ -31,7 +30,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 	parsedExpression, err := expression.ParseExpression(body.Expression1)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("%s", err)))
+		w.Write([]byte("Выражение не прошло валидацию"))
 		return
 	}
 	id := rand.Uint64()
@@ -40,7 +39,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		ExpressinID: id,
 		ParsedEx:    parsedExpression,
 	}
-	o.Repo.Distribution(parsedExpression, fmt.Sprint(id))
+
 	err = o.Repo.Insert(r.Context(), out)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -48,7 +47,10 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ошибка в базе данных"))
 		return
 	}
-
+	outres, err := o.Repo.Distribution(parsedExpression, fmt.Sprint(id))
+	if err != nil {
+		o.Repo.DeleteAgent(fmt.Sprint(id))
+	}
 	res, err := json.Marshal(out.ExpressinID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -58,30 +60,10 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(res)
+	w.Write([]byte("=" + fmt.Sprint(outres[0].Value)))
 	w.WriteHeader(http.StatusCreated)
 }
-func (o *Expression) GetExpressionByID(w http.ResponseWriter, r *http.Request) {
-	key := chi.URLParam(r, "id")
 
-	const decimal = 10
-	const bitSize = 64
-
-	ID, err := strconv.ParseUint(key, decimal, bitSize)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	res, err := o.Repo.ExpressionFind(r.Context(), ID)
-	if err != nil {
-		return
-	}
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		fmt.Println("error in marshing")
-	}
-
-}
 func (o *Expression) SetAgentStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var Newagent model.Requert
@@ -105,8 +87,34 @@ func (o *Expression) GetAgentStatus(w http.ResponseWriter, r *http.Request) {
 
 		if timeOld > time.Second*5 {
 			w.Write([]byte("Агент умер\n"))
+
+			o.Repo.DeleteAgent(fmt.Sprint(onestatus.Id))
 		} else {
 			w.Write([]byte("Агент жив\n"))
 		}
 	}
+}
+func (o *Expression) UpdateConfigHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	currentConfig := model.Config{}
+	// Парсим значения из формы
+	if err := json.NewDecoder(r.Body).Decode(&currentConfig); err != nil {
+		http.Error(w, "Неверный формат запроса", http.StatusBadRequest)
+		return
+	}
+	// Обновляем значения в конфигурации
+
+	jsonConfig, err := json.Marshal(currentConfig)
+	if err != nil {
+		w.Write([]byte("ошибка в чтении конфига"))
+	}
+
+	_, err = o.Repo.Client.Set(context.Background(), "config", string(jsonConfig), 0).Result()
+	if err != nil {
+		w.Write([]byte("ошибка в чтении конфига"))
+	}
+
 }
