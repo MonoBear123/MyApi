@@ -30,18 +30,18 @@ var (
 	activeWorkers   int
 )
 
-func (r *Req) main() {
+func main() {
 	client := &http.Client{}
 	id := rand.Uint64()
 	go sendHeartbeat(client, "http://server:8041/setstatus", id)
-
+	req := &Req{Repo: &expression.RedisRepo{}}
 	for {
-		expression,err := r.LockQueue("my_queue")
+		expression, err := req.LockQueue("my_queue")
 		if err != nil {
 			continue
 		}
 		// Получаем значение из очереди
-		
+
 		mutex.Lock()
 		activeWorkers++
 		mutex.Unlock()
@@ -77,14 +77,14 @@ func (r *Req) main() {
 			case "+":
 				num1 := expression[1].(float64)
 				num2 := expression[0].(float64)
-				res = num1 / num2
+				res = num1 + num2
 			case "^":
 				num1 := expression[1].(float64)
 				num2 := expression[0].(float64)
 				res = math.Pow(num1, num2)
 			}
 			time.Sleep(100 * time.Second)
-			r.Repo.Client.LPush(context.Background(), expression[4].(string), []interface{}{res,expression[4]})
+			req.Repo.Client.LPush(context.Background(), expression[4].(string), []interface{}{res, expression[4]})
 		}(expression)
 
 	}
@@ -117,18 +117,18 @@ func sendHeartbeat(client *http.Client, url string, id uint64) {
 	}
 }
 
-func (r *Req) LockQueue(queueName string) ([]interface{},error) {
+func (r *Req) LockQueue(queueName string) ([]interface{}, error) {
 	ctx := context.Background()
 	lockKey := queueName + "_lock"
 	lockValue := "locked"
 	lockSet, err := r.Repo.Client.SetNX(ctx, lockKey, lockValue, time.Second).Result()
 	if err != nil {
-		return nil,fmt.Errorf("ошибка при установке блокировки: %v", err)
+		return nil, fmt.Errorf("ошибка при установке блокировки: %v", err)
 	}
 
 	if !lockSet {
 		// Блокировка уже установлена, пропускаем задачу
-		return nil,fmt.Errorf("12")
+		return nil, fmt.Errorf("12")
 	}
 
 	defer func() {
