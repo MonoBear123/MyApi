@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"math/rand"
 	"net/http"
@@ -24,6 +23,19 @@ var (
 	mutex         sync.Mutex
 	activeWorkers int
 )
+
+type Result struct {
+	Res   float64 `json:"res"`
+	Index int     `json:"index"`
+	Error string  `json:"error"`
+}
+type SubEx struct {
+	Num1     float64 `json:"num1"`
+	Num2     float64 `json:"num2"`
+	Operator string  `json:"operator"`
+	Id       string  `json:"id"`
+	Index    int     `json:"index"`
+}
 
 func main() {
 	client := &http.Client{}
@@ -59,13 +71,13 @@ func main() {
 			continue
 		}
 		// Получаем значение из очереди
-
+		fmt.Println("значение получено")
 		mutex.Lock()
 		activeWorkers++
 		mutex.Unlock()
 		workerSemaphore <- struct{}{}
 
-		go func(expression []interface{}) {
+		go func(expression SubEx) {
 			defer func() {
 
 				<-workerSemaphore
@@ -75,41 +87,41 @@ func main() {
 			}()
 			var res float64
 			var Error string
-			switch expression[2] {
+			switch expression.Operator {
 			case "/":
-				if expression[1] == 0 {
+				if expression.Num2 == 0 {
 					Error = "err"
 				}
 				time.Sleep(time.Second * time.Duration(config.Division))
-				num1 := expression[1].(float64)
-				num2 := expression[0].(float64)
-				res = num1 / num2
+				res = expression.Num1 / expression.Num2
+
 			case "*":
 				time.Sleep(time.Second * time.Duration(config.Multiplication))
-				num1 := expression[1].(float64)
-				num2 := expression[0].(float64)
-				res = num1 * num2
+				res = expression.Num1 * expression.Num2
 
 			case "-":
 				time.Sleep(time.Second * time.Duration(config.Minus))
-				num1 := expression[1].(float64)
-				num2 := expression[0].(float64)
-				res = num1 - num2
+
+				res = expression.Num1 - expression.Num2
 
 			case "+":
 				time.Sleep(time.Second * time.Duration(config.Plus))
-				num1 := expression[1].(float64)
-				num2 := expression[0].(float64)
-				res = num1 + num2
+				res = expression.Num1 + expression.Num2
 			case "^":
 				time.Sleep(time.Second * time.Duration(config.Construction))
-				num1 := expression[1].(float64)
-				num2 := expression[0].(float64)
-				res = math.Pow(num1, num2)
-			}
 
-			log.Print(res)
-			clientRedis.LPush(context.Background(), expression[4].(string), []interface{}{res, expression[4], Error})
+				res = math.Pow(expression.Num1, expression.Num2)
+			}
+			out, err := json.Marshal(Result{
+				Res:   res,
+				Index: expression.Index,
+				Error: Error,
+			})
+			if err != nil {
+				fmt.Print("не удалось замарщалить результат")
+			}
+			fmt.Print(res)
+			clientRedis.LPush(context.Background(), expression.Id, out)
 
 		}(expression)
 
@@ -143,18 +155,18 @@ func sendHeartbeat(client *http.Client, url string, id uint64, MaxWorkers int) {
 	}
 }
 
-func LockQueue(queueName string, client *redis.Client) ([]interface{}, error) {
+func LockQueue(queueName string, client *redis.Client) (SubEx, error) {
 	ctx := context.Background()
 	lockKey := queueName + "_lock"
 	lockValue := "locked"
 	lockSet, err := client.SetNX(ctx, lockKey, lockValue, time.Second).Result()
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при установке блокировки: %v", err)
+		return SubEx{}, fmt.Errorf("ошибка при установке блокировки: %v", err)
 	}
 
 	if !lockSet {
 		// Блокировка уже установлена, пропускаем задачу
-		return nil, fmt.Errorf("12")
+		return SubEx{}, fmt.Errorf("12")
 	}
 
 	defer func(clientRedis *redis.Client) {
@@ -163,13 +175,13 @@ func LockQueue(queueName string, client *redis.Client) ([]interface{}, error) {
 	}(client)
 	result, err := client.LPop(ctx, queueName).Result()
 	if err != nil {
-		return nil, fmt.Errorf("ошибка в очереди: %v", err)
+		return SubEx{}, fmt.Errorf("ошибка в очереди: %v", err)
 	}
 
-	var expression []interface{}
+	expression := SubEx{}
 	err = json.Unmarshal([]byte(result), &expression)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка распаковки JSON: %v", err)
+		return SubEx{}, fmt.Errorf("ошибка распаковки JSON: %v", err)
 	}
 
 	return expression, nil

@@ -25,7 +25,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Неверный формат запроса", http.StatusBadRequest)
 		return
 	}
-
+	fmt.Print("прошло")
 	w.Write([]byte(body.Expression1))
 	parsedExpression, err := expression.ParseExpression(body.Expression1)
 	if err != nil {
@@ -47,7 +47,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ошибка в базе данных"))
 		return
 	}
-	outres, err := o.Repo.Distribution(parsedExpression, fmt.Sprint(id))
+	outres, err := o.Repo.Distribution(parsedExpression, id,body.Expression1)
 	if err != nil {
 		o.Repo.DeleteAgent(fmt.Sprint(id))
 	}
@@ -85,7 +85,7 @@ func (o *Expression) GetAgentStatus(w http.ResponseWriter, r *http.Request) {
 	for _, onestatus := range status {
 		timeOld := time.Since(onestatus.Time)
 
-		if timeOld > time.Second*5 {
+		if timeOld > time.Second*30 {
 			w.Write([]byte("Агент умер\n"))
 
 			o.Repo.DeleteAgent(fmt.Sprint(onestatus.Id))
