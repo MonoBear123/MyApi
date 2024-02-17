@@ -8,7 +8,8 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
-	"sync"
+
+	//"sync"
 	"time"
 
 	"github.com/MonoBear123/MyApi/back/model"
@@ -20,7 +21,7 @@ const (
 )
 
 var (
-	mutex         sync.Mutex
+	//mutex         sync.Mutex
 	activeWorkers int
 )
 
@@ -77,21 +78,21 @@ func main() {
 		}
 		// Получаем значение из очереди
 		fmt.Println("значение получено")
-		mutex.Lock()
+		//mutex.Lock()
 
 		activeWorkers++
 
-		mutex.Unlock()
+		//mutex.Unlock()
 		fmt.Println("мьютексы пройдены?")
 		workerSemaphore <- struct{}{}
-
+		fmt.Println(expression.Num1, expression.Num2)
 		go func(expression SubEx, clientRedis *redis.Client) {
 			defer func() {
 
 				<-workerSemaphore
-				mutex.Lock()
+				//mutex.Lock()
 				activeWorkers--
-				mutex.Unlock()
+				//mutex.Unlock()
 			}()
 			var res float64
 			var Error string
@@ -146,11 +147,11 @@ func main() {
 func sendHeartbeat(client *http.Client, url string, id uint64, MaxWorkers int) {
 
 	for {
-		mutex.Lock()
-		numOfWorkers := activeWorkers
-		mutex.Unlock()
+		//mutex.Lock()
+
+		//mutex.Unlock()
 		res, err := json.Marshal(model.Requert{Id: id, Status: "OK", Time: time.Now(),
-			NumOfWorkers: numOfWorkers, MaxNumWorkers: MaxWorkers})
+			NumOfWorkers: activeWorkers, MaxNumWorkers: MaxWorkers})
 		if err != nil {
 			return
 		}
