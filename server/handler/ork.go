@@ -25,7 +25,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Неверный формат запроса", http.StatusBadRequest)
 		return
 	}
-	fmt.Print("прошло")
+	fmt.Println("прошло")
 	w.Write([]byte(body.Expression1))
 	parsedExpression, err := expression.ParseExpression(body.Expression1)
 	if err != nil {
@@ -47,10 +47,13 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ошибка в базе данных"))
 		return
 	}
+	fmt.Println("отправлено на раскидку субвыражений")
 	outres, err := o.Repo.Distribution(parsedExpression, id, body.Expression1)
 	if err != nil {
 		o.Repo.DeleteAgent(fmt.Sprint(id))
+		fmt.Println("не прошло раскидку субвыражений")
 	}
+	fmt.Println("прошло раскидку субвыражений")
 	res, err := json.Marshal(out.Expression)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

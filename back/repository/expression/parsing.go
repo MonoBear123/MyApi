@@ -36,7 +36,7 @@ func ParseExpression(expr string) ([]*shuntingYard.RPNToken, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Print("прошло обработку")
+	fmt.Println("прошло обработку")
 	return postfixTokens, nil
 }
 func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64, ex string) ([]*shuntingYard.RPNToken, error) {
@@ -50,18 +50,19 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 		return nil, fmt.Errorf("ошибка вывода из джейсона")
 	}
 	maxTime := max(config.Construction, config.Minus, config.Division, config.Plus, config.Multiplication)
+	fmt.Println("начало обработки выражения  ")
 	for len(expression) != 1 {
-		for index := 0; index < len(expression)-3; index++ {
-			if !strings.ContainsAny(fmt.Sprintf("%v", expression[index].Value), "+-/*^.") && !strings.ContainsAny(fmt.Sprintf("%v", expression[index+1].Value), "+-/*^.") && strings.ContainsAny(fmt.Sprintf("%v", expression[index+2].Value), "+-/*^") {
+		for index := 0; index < len(expression)-2; index++ {
+			if !strings.ContainsAny(fmt.Sprint(expression[index].Value), "+-/*^.") && !strings.ContainsAny(fmt.Sprint(expression[index+1].Value), "+-/*^.") && strings.ContainsAny(fmt.Sprint(expression[index+2].Value), "+-/*^") {
 				err := r.EnqueueMessage("my_queue", SubEx{
-					Num1:     expression[index].Value.(float64),
-					Num2:     expression[index+1].Value.(float64),
-					Operator: expression[index+3].Value.(string),
+					Num1:     float64(expression[index].Value.(int)),
+					Num2:     float64(expression[index+1].Value.(int)),
+					Operator: expression[index+2].Value.(string),
 					Id:       fmt.Sprint(id),
 					Index:    index,
 				}, maxTime)
 				if err != nil {
-					fmt.Print(err)
+					fmt.Println("НЕ ОТПРАВИЛОСЬ В ОЧЕРЕДЬ ", err)
 				}
 				fmt.Printf("отправлено в очередь %d %d %d", expression[index].Value, expression[index+1].Value, expression[index+2].Value)
 				expression[index].Value = "."
@@ -85,7 +86,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 			if len(expression) < 4 {
 				expression = expression[:newEX.Index+1]
 			} else {
-				expression = append(expression[:newEX.Index+1], expression[newEX.Index+2:]...)
+				expression = append(expression[:newEX.Index+1], expression[newEX.Index+3:]...)
 			}
 
 			out := model.EXpression{

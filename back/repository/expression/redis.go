@@ -87,6 +87,7 @@ func (r *RedisRepo) AgentInsert(ctx context.Context, agent model.Requert) error 
 	if err != nil {
 		return err
 	}
+	fmt.Println("выражение добавлено в базу данных")
 	return nil
 }
 func (r *RedisRepo) DeleteExpression(name string) error {

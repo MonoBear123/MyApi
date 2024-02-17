@@ -82,10 +82,10 @@ func main() {
 		activeWorkers++
 
 		mutex.Unlock()
-
+		fmt.Println("мьютексы пройдены?")
 		workerSemaphore <- struct{}{}
 
-		go func(expression SubEx) {
+		go func(expression SubEx, clientRedis *redis.Client) {
 			defer func() {
 
 				<-workerSemaphore
@@ -97,6 +97,7 @@ func main() {
 			var Error string
 			switch expression.Operator {
 			case "/":
+				fmt.Print("запустился на делении")
 				if expression.Num2 == 0 {
 					Error = "err"
 				}
@@ -104,22 +105,28 @@ func main() {
 				res = expression.Num1 / expression.Num2
 
 			case "*":
+				fmt.Print("запустился на произведении")
 				time.Sleep(time.Second * time.Duration(config.Multiplication))
 				res = expression.Num1 * expression.Num2
 
 			case "-":
+				fmt.Print("запустился на минусе")
 				time.Sleep(time.Second * time.Duration(config.Minus))
 
 				res = expression.Num1 - expression.Num2
 
 			case "+":
+				fmt.Print("запустился на плюсе")
 				time.Sleep(time.Second * time.Duration(config.Plus))
 				res = expression.Num1 + expression.Num2
 			case "^":
 				time.Sleep(time.Second * time.Duration(config.Construction))
 
 				res = math.Pow(expression.Num1, expression.Num2)
+			default:
+				fmt.Print("не найден оператор")
 			}
+
 			out, err := json.Marshal(Result{
 				Res:   res,
 				Index: expression.Index,
@@ -131,15 +138,19 @@ func main() {
 			fmt.Print(res)
 			clientRedis.LPush(context.Background(), expression.Id, out)
 
-		}(expression)
+		}(expression, clientRedis)
 
 	}
 
 }
 func sendHeartbeat(client *http.Client, url string, id uint64, MaxWorkers int) {
+
 	for {
+		mutex.Lock()
+		numOfWorkers := activeWorkers
+		mutex.Unlock()
 		res, err := json.Marshal(model.Requert{Id: id, Status: "OK", Time: time.Now(),
-			NumOfWorkers: activeWorkers, MaxNumWorkers: MaxWorkers})
+			NumOfWorkers: numOfWorkers, MaxNumWorkers: MaxWorkers})
 		if err != nil {
 			return
 		}

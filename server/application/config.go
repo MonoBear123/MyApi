@@ -12,7 +12,7 @@ import (
 func (a *App) loadConfig() {
 
 	currentConfig := model.Config{
-		Plus:           100,
+		Plus:           2,
 		Minus:          100,
 		Division:       100,
 		Multiplication: 100,
