@@ -73,7 +73,7 @@ func main() {
 
 	for {
 		expression, err := LockQueue("my_queue", clientRedis)
-		if err != nil {
+		if err == fmt.Errorf("очередь пуста") || err != nil {
 			continue
 		}
 		// Получаем значение из очереди
@@ -196,9 +196,17 @@ func LockQueue(queueName string, client *redis.Client) (SubEx, error) {
 
 	result, err := client.LPop(ctx, queueName).Result()
 	if err != nil {
-		return SubEx{}, fmt.Errorf("ошибка в очереди: %v", err)
+		return SubEx{}, fmt.Errorf("ошибка в очереди")
+	}
+	queueLen, err := client.LLen(ctx, queueName).Result()
+	if err != nil {
+		return SubEx{}, fmt.Errorf("ошибка при получении длины очереди: %w", err)
 	}
 
+	if queueLen == 0 {
+		// Очередь пуста, возвращаем ошибку или обрабатываем ситуацию по вашему усмотрению
+		return SubEx{}, fmt.Errorf("очередь пуста")
+	}
 	expression := SubEx{}
 
 	err = json.Unmarshal([]byte(result), &expression)
