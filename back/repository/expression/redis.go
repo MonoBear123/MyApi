@@ -79,8 +79,12 @@ func (r *RedisRepo) AgentALLFind(ctx context.Context) []model.Requert {
 func (r *RedisRepo) AgentInsert(ctx context.Context, agent model.Requert) error {
 
 	key := AgentIDKey(agent.Id)
-	res := r.Client.Set(ctx, key, agent, 0)
-	if err := res.Err(); err != nil {
+	res, err := json.Marshal(agent)
+	if err != nil {
+		return err
+	}
+	err = r.Client.Set(ctx, key, res, 0).Err()
+	if err != nil {
 		return err
 	}
 	return nil

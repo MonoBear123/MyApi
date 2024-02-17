@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -17,9 +18,12 @@ func (a *App) loadConfig() {
 		Multiplication: 100,
 		Construction:   100,
 	}
-
+	res, err := json.Marshal(currentConfig)
+	if err != nil {
+		log.Fatal("ошибка в маршалинге конфига")
+	}
 	time.Sleep(15 * time.Second)
-	_, err := a.rdb.Set(context.Background(), "config", currentConfig, 0).Result()
+	err = a.rdb.Set(context.Background(), "config", string(res), 0).Err()
 	if err != nil {
 		log.Fatal(" стандартные значение конфига не установились")
 	}

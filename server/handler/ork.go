@@ -47,18 +47,18 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ошибка в базе данных"))
 		return
 	}
-	outres, err := o.Repo.Distribution(parsedExpression, id,body.Expression1)
+	outres, err := o.Repo.Distribution(parsedExpression, id, body.Expression1)
 	if err != nil {
 		o.Repo.DeleteAgent(fmt.Sprint(id))
 	}
-	res, err := json.Marshal(out.ExpressinID)
+	res, err := json.Marshal(out.Expression)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		w.Write([]byte("ошибка не в базе данных"))
 		return
 	}
-
+	fmt.Print(res)
 	w.Write(res)
 	w.Write([]byte("=" + fmt.Sprint(outres[0].Value)))
 	w.WriteHeader(http.StatusCreated)
@@ -112,7 +112,7 @@ func (o *Expression) UpdateConfigHandler(w http.ResponseWriter, r *http.Request)
 		w.Write([]byte("ошибка в чтении конфига"))
 	}
 
-	_, err = o.Repo.Client.Set(context.Background(), "config", string(jsonConfig), 0).Result()
+	err = o.Repo.Client.Set(context.Background(), "config", string(jsonConfig), 0).Err()
 	if err != nil {
 		w.Write([]byte("ошибка в чтении конфига"))
 	}

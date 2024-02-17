@@ -44,17 +44,22 @@ func main() {
 
 	}
 	clientRedis := redis.NewClient(options)
+
 	id := rand.Uint64()
+
 	ConfigJson, err := clientRedis.Get(context.Background(), "config").Result()
 	if err != nil {
 		fmt.Print("не получил конфига ")
 	}
 	config := model.Config{}
+
 	err = json.Unmarshal([]byte(ConfigJson), &config)
 	if err != nil {
 		fmt.Print("не подлючен к редис")
 	}
+
 	workerSemaphore := make(chan struct{}, config.MaxGorutines)
+
 	go sendHeartbeat(client, "http://server:8041/setstatus", id, config.MaxGorutines)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -63,8 +68,8 @@ func main() {
 	if err := clientRedis.Ping(ctx).Err(); err != nil {
 		fmt.Print("не подлючен к редис")
 	}
-
 	fmt.Println("Успешное подключение к Redis")
+
 	for {
 		expression, err := LockQueue("my_queue", clientRedis)
 		if err != nil {
@@ -73,8 +78,11 @@ func main() {
 		// Получаем значение из очереди
 		fmt.Println("значение получено")
 		mutex.Lock()
+
 		activeWorkers++
+
 		mutex.Unlock()
+
 		workerSemaphore <- struct{}{}
 
 		go func(expression SubEx) {
@@ -173,12 +181,14 @@ func LockQueue(queueName string, client *redis.Client) (SubEx, error) {
 		// Снимаем блокировку после выполнения задачи
 		clientRedis.Del(ctx, lockKey)
 	}(client)
+
 	result, err := client.LPop(ctx, queueName).Result()
 	if err != nil {
 		return SubEx{}, fmt.Errorf("ошибка в очереди: %v", err)
 	}
 
 	expression := SubEx{}
+
 	err = json.Unmarshal([]byte(result), &expression)
 	if err != nil {
 		return SubEx{}, fmt.Errorf("ошибка распаковки JSON: %v", err)
