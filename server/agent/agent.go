@@ -81,11 +81,11 @@ func main() {
 		//mutex.Lock()
 
 		activeWorkers++
-
+		fmt.Println("доп канала ", expression.Num1, expression.Num2)
 		//mutex.Unlock()
 		fmt.Println("мьютексы пройдены?")
 		workerSemaphore <- struct{}{}
-		fmt.Println(expression.Num1, expression.Num2)
+		fmt.Println("после канала ", expression.Num1, expression.Num2)
 		go func(expression SubEx, clientRedis *redis.Client) {
 			defer func() {
 
