@@ -54,7 +54,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 	fmt.Println("начало обработки выражения  ")
 	for len(expression) != 1 {
 		for index := 0; index < len(expression)-2; index++ {
-
+			fmt.Println(expression)
 			if !strings.ContainsAny(fmt.Sprint(expression[index].Value), "+-/*^.") && !strings.ContainsAny(fmt.Sprint(expression[index+1].Value), "+-/*^.") && strings.ContainsAny(fmt.Sprint(expression[index+2].Value), "+-/*^") {
 				var num1, num2 float64
 				if val, ok := expression[index].Value.(int); ok {
@@ -101,11 +101,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 				return nil, fmt.Errorf("встречено деление на ноль")
 			}
 			expression[newEX.Index].Value = newEX.Res
-			if len(expression) < 4 {
-				expression = expression[:newEX.Index+1]
-			} else {
-				expression = append(expression[:newEX.Index+1], expression[newEX.Index+3:]...)
-			}
+			expression = append(expression[:newEX.Index+1], expression[newEX.Index+3:]...)
 
 			out := model.EXpression{
 				Expression:  ex,

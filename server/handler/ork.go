@@ -64,7 +64,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-
+	fmt.Println(res, "="+fmt.Sprint(outres[0].Value))
 	// Отправляем JSON-ответ обратно клиенту
 	json.NewEncoder(w).Encode(res)
 

@@ -38,10 +38,19 @@
             <form id="configForm">
                 <!-- Сюда добавьте поля для ввода (6 строчек, *^/+- и gorutines) -->
                 <!-- Пример: -->
-                <label for="line1">Строка 1:</label>
-                <input type="text" id="line1" name="line1" required>
+                <label for="line1">Время сложения:</label>
+                <input type="text" id="line1" name="+" required>
+                <label for="line1">Время вычитания:</label>
+                <input type="text" id="line2" name="-" required>
+                <label for="line1">Время умножения:</label>
+                <input type="text" id="line3" name="*" required>
+                <label for="line1">Время деления:</label>
+                <input type="text" id="line4" name="/" required>
+                <label for="line1">Время возведения в степень:</label>
+                <input type="text" id="line5" name="^" required>
 
-                <!-- Добавьте другие поля для остальных строк и gorutines -->
+
+               
 
                 <button type="button" onclick="submitConfig()">Отправить конфигурацию</button>
             </form>

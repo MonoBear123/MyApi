@@ -59,7 +59,6 @@ func main() {
 	if err != nil {
 		fmt.Print("не подлючен к редис")
 	}
-	fmt.Println(config.MaxGorutines)
 
 	workerSemaphore := make(chan struct{}, config.MaxGorutines)
 	go sendHeartbeat(client, "http://server:8041/setstatus", id, config.MaxGorutines)
@@ -75,7 +74,16 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
+		ConfigJson, err := clientRedis.Get(context.Background(), "config").Result()
+		if err != nil {
+			fmt.Print("не получил конфига ")
+		}
+		config2 := model.Config{}
 
+		err = json.Unmarshal([]byte(ConfigJson), &config2)
+		if err != nil {
+			fmt.Print("не подлючен к редис")
+		}
 		// Получаем значение из очереди
 		fmt.Println("значение получено")
 		//mutex.Lock()
@@ -97,26 +105,27 @@ func main() {
 				if expression.Num2 == 0 {
 					Error = "err"
 				}
-				time.Sleep(time.Second * time.Duration(config.Division))
+				time.Sleep(time.Second * time.Duration(config2.Division))
 				res = expression.Num1 / expression.Num2
 
 			case "*":
 				fmt.Print("запустился на произведении")
-				time.Sleep(time.Second * time.Duration(config.Multiplication))
+				time.Sleep(time.Second * time.Duration(config2.Multiplication))
 				res = expression.Num1 * expression.Num2
 
 			case "-":
 				fmt.Print("запустился на минусе")
-				time.Sleep(time.Second * time.Duration(config.Minus))
+				time.Sleep(time.Second * time.Duration(config2.Minus))
 
 				res = expression.Num1 - expression.Num2
 
 			case "+":
-				fmt.Print("запустился на плюсе")
-				time.Sleep(time.Second * time.Duration(config.Plus))
+				fmt.Println("запустился на плюсе")
+				fmt.Println(expression.Num1, " ", expression.Num2)
+				time.Sleep(time.Second * time.Duration(config2.Plus))
 				res = expression.Num1 + expression.Num2
 			case "^":
-				time.Sleep(time.Second * time.Duration(config.Construction))
+				time.Sleep(time.Second * time.Duration(config2.Construction))
 
 				res = math.Pow(expression.Num1, expression.Num2)
 			default:
