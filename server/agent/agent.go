@@ -78,11 +78,10 @@ func main() {
 		fmt.Println("значение получено")
 		//mutex.Lock()
 
-		
 		//mutex.Unlock()
 		fmt.Println("мьютексы пройдены?")
 		workerSemaphore <- struct{}{}
-		
+
 		fmt.Println("после канала ", expression.Id)
 		go func(expression SubEx, clientRedis *redis.Client) {
 			fmt.Println("Перед дефером")
@@ -131,7 +130,7 @@ func main() {
 				fmt.Print("не удалось замарщалить результат")
 			}
 			fmt.Print(res)
-			err = clientRedis.LPush(context.Background(), expression.Id, out).Err()
+			err = clientRedis.LPush(context.Background(), expression.Id, string(out)).Err()
 			if err != nil {
 				fmt.Print("Bad Gorutine")
 			} else {
