@@ -56,9 +56,18 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 		for index := 0; index < len(expression)-2; index++ {
 
 			if !strings.ContainsAny(fmt.Sprint(expression[index].Value), "+-/*^.") && !strings.ContainsAny(fmt.Sprint(expression[index+1].Value), "+-/*^.") && strings.ContainsAny(fmt.Sprint(expression[index+2].Value), "+-/*^") {
+				var num1, num2 float64
+				if val, ok := expression[index].Value.(int); ok {
+					// Если тип данных - int, то преобразуем в float64
+					num1 = float64(val)
+				}
+				if val2, ok := expression[index+1].Value.(int); ok {
+					// Если тип данных - int, то преобразуем в float64
+					num2 = float64(val2)
+				}
 				err := r.EnqueueMessage("my_queue", SubEx{
-					Num1:     float64(expression[index].Value.(int)),
-					Num2:     float64(expression[index+1].Value.(int)),
+					Num1:     num1,
+					Num2:     num2,
 					Operator: expression[index+2].Value.(string),
 					Id:       "qeue:" + fmt.Sprint(id),
 					Index:    index,

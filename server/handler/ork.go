@@ -61,7 +61,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ошибка не в базе данных"))
 		return
 	}
-	fmt.Print(res)
+
 	w.Write(res)
 	w.Write([]byte("=" + fmt.Sprint(outres[0].Value)))
 	w.WriteHeader(http.StatusCreated)
