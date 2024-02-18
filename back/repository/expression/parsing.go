@@ -127,6 +127,7 @@ func (r *RedisRepo) EnqueueMessage(name string, subEx SubEx, maxTime int) error 
 	return nil
 }
 func (r *RedisRepo) DequeueMessage(name string) (Result, error) {
+	fmt.Println("qeue:" + name)
 	result, err := r.Client.BLPop(context.Background(), 0, "qeue:"+name).Result()
 	if err != nil {
 		return Result{}, fmt.Errorf("ошибка при ожидании значения из очереди: %v", err)

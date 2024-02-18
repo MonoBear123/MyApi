@@ -131,8 +131,9 @@ func main() {
 			if err != nil {
 				fmt.Print("не удалось замарщалить результат")
 			}
-			fmt.Print(res)
-			err = clientRedis.LPush(context.Background(), "qeue:"+expression.Id, string(out)).Err()
+			fmt.Println(res)
+			fmt.Println(expression.Id)
+			err = clientRedis.LPush(context.Background(), expression.Id, string(out)).Err()
 			if err != nil {
 				fmt.Printf("Ошибка при отправке данных в очередь: %v\n", err)
 			} else {
@@ -145,8 +146,6 @@ func main() {
 			fmt.Println("Before reading from workerSemaphore")
 			<-workerSemaphore
 			fmt.Println("After reading from workerSemaphore")
-
-	
 
 		}(expression, clientRedis)
 
