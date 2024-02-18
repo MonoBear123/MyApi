@@ -27,8 +27,8 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Неверный формат запроса", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("прошло")
-	w.Write([]byte(body.Expression1))
+
+	
 	parsedExpression, err := expression.ParseExpression(body.Expression1)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -49,18 +49,19 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ошибка в базе данных"))
 		return
 	}
-	fmt.Println("отправлено на раскидку субвыражений")
+
 	outres, err := o.Repo.Distribution(parsedExpression, id, body.Expression1)
 	if err != nil {
 		o.Repo.DeleteAgent(fmt.Sprint(id))
-		fmt.Println("не прошло раскидку субвыражений")
+		w.Write([]byte("встречено деление на 0"))
+		return
 	}
-	fmt.Println("прошло раскидку субвыражений")
 
-	w.Header().Set("Content-Type", "application/json")
+
 	fmt.Println(out.Expression + "=" + fmt.Sprint(outres[0].Value))
-	// Отправляем JSON-ответ обратно клиенту
+
 	w.Write([]byte(out.Expression + "=" + fmt.Sprint(outres[0].Value)))
+	o.Repo.DeleteExpression(fmt.Sprint(id))
 
 }
 

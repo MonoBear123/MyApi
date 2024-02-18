@@ -11,6 +11,7 @@ type EXpression struct {
 	ExpressinID uint64                   `json:"expression_id"`
 	ParsedEx    []*shuntingYard.RPNToken `json:"parsedex"`
 	Result      []*shuntingYard.RPNToken `json:"result"`
+	
 }
 
 type Requert struct {
