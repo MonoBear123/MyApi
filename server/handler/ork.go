@@ -56,17 +56,11 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("не прошло раскидку субвыражений")
 	}
 	fmt.Println("прошло раскидку субвыражений")
-	res, err := json.Marshal(out.Expression + "=" + fmt.Sprint(outres[0].Value))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 
-		w.Write([]byte("ошибка не в базе данных"))
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println(res, "="+fmt.Sprint(outres[0].Value))
+	fmt.Println(out.Expression + "=" + fmt.Sprint(outres[0].Value))
 	// Отправляем JSON-ответ обратно клиенту
-	json.NewEncoder(w).Encode(res)
+	w.Write([]byte(out.Expression + "=" + fmt.Sprint(outres[0].Value)))
 
 }
 
