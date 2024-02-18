@@ -13,18 +13,13 @@
         background-color: #fff;
 
     }
-
-    .ok-status {
-        background-color: #8eff8e;
-
-    }
 </style>
 
 <div class="agent-list">
     <h3>Список Агентов</h3>
     <ul style="list-style-type: none; padding: 0;">
         {{range $key, $value := .}}
-        <li class="agent-item {{if eq (strings.ToLower (strings.TrimSpace $value.Status)) " ок"}}ok-status{{end}}">
+        <li>
             {{ $key }}: {{ $value.Status }} Агент использует {{ $value.NumOfWorkers }}/{{
             $value.MaxNumWorkers }}
         </li>

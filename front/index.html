@@ -15,57 +15,72 @@
             background-color: aliceblue;
             text-emphasis-color: rgb(255, 0, 0)
         }
+
+        .rounded-button {
+            border-radius: 9999px;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
-    <div class="conteiner mx-auto px-2">
+    <div class="container mx-auto px-2">
 
-        <div class="flex flex-row space-x-4 px=1 mx=1 border=2 border-black">
-            <button class="bg-red-700 p-3 border-black border-2 text-whilte" hx-get="/getstatus" hx-target="#status"
-                hx-swap="HTML" onclick="highlightButton('getstatusBtn')">Список
+        <div class="flex flex-row space-x-4 px-1 mx-1 border-2 border-black">
+            <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" hx-get="/getstatus"
+                hx-target="#status" hx-swap="HTML" onclick="highlightButton('getstatusBtn')">Список
                 агентов</button>
 
+            <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" type="button"
+                onclick="openConfigWindow()">Открыть окно конфигурации</button>
+
+            <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" type="button"
+                onclick="sendExpression()">Отправить выражение</button>
         </div>
 
         <div id="set" class="flex flex-row space-x-4 mt-4 mb-4">
-            <form id="expressionForm" onsubmit="event.preventDefault(); sendExpression();">
+            <form id="expressionForm">
                 <label for="expression">Введите выражение:</label>
                 <input type="text" id="expressionInput" name="expression" required>
-                <button class="bg-red-700 p-3 border-black border-2" type="submit">Отправить выражение</button>
+                <button class="bg-red-700 p-3 border-black border-2 rounded-button" type="button"
+                    onclick="sendExpression()">Отправить выражение</button>
             </form>
         </div>
+
         <div id="status">
         </div>
-
-        <button class="bg-red-700 p-3 border-black border-2 text-whilte " type="button"
-            onclick="openConfigWindow()">Открыть окно конфигурации</button>
 
         <!-- Окно конфигурации -->
         <div id="configWindow" class="hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-75">
             <div class="p-8 bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                 <h2 class="text-xl font-bold mb-4">Конфигурация</h2>
                 <form id="configForm">
-                    <!-- Сюда добавьте поля для ввода (6 строчек, *^/+- и gorutines) -->
-                    <!-- Пример: -->
-                    <label for="line1">Время сложения:</label>
-                    <input type="text" id="line1" name="+" required>
-                    <label for="line1">Время вычитания:</label>
-                    <input type="text" id="line2" name="-" required>
-                    <label for="line1">Время умножения:</label>
-                    <input type="text" id="line3" name="*" required>
-                    <label for="line1">Время деления:</label>
-                    <input type="text" id="line4" name="/" required>
-                    <label for="line1">Время возведения в степень:</label>
-                    <input type="text" id="line5" name="^" required>
-
-
-
-
-                    <button class="bg-red-700 p-3 border-black border-2 text-whilte" type="button"
+                    <ul>
+                        <li>
+                            <label for="line1">Время сложения:</label>
+                            <input type="text" id="line1" name="+" required>
+                        </li>
+                        <li>
+                            <label for="line2">Время вычитания:</label>
+                            <input type="text" id="line2" name="-" required>
+                        </li>
+                        <li>
+                            <label for="line3">Время умножения:</label>
+                            <input type="text" id="line3" name="*" required>
+                        </li>
+                        <li>
+                            <label for="line4">Время деления:</label>
+                            <input type="text" id="line4" name="/" required>
+                        </li>
+                        <li>
+                            <label for="line5">Время возведения в степень:</label>
+                            <input type="text" id="line5" name="^" required>
+                        </li>
+                    </ul>
+                    <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" type="button"
                         onclick="submitConfig()">Отправить конфигурацию</button>
                 </form>
-                <button class="bg-red-700 p-3 border-black border-2 text-whilte" type="button"
+                <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" type="button"
                     onclick="closeConfigWindow()">Закрыть</button>
             </div>
         </div>
@@ -78,6 +93,7 @@
         function closeConfigWindow() {
             document.getElementById("configWindow").classList.add("hidden");
         }
+
         function submitConfig() {
             // Получите данные из формы
             var formData = new FormData(document.getElementById("configForm"));
@@ -98,6 +114,7 @@
             // Закройте окно после отправки данных
             closeConfigWindow();
         }
+
         function sendExpression() {
             var expression = document.getElementById("expressionInput").value;
 
@@ -119,6 +136,7 @@
                     console.error("Error:", error);
                 });
         }
+
         function highlightButton(buttonId) {
             // Убираем обводку у всех кнопок
             var buttons = document.querySelectorAll('button');
