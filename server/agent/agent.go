@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	//"sync"
+	"sync"
 	"time"
 
 	"github.com/MonoBear123/MyApi/back/model"
@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	//mutex         sync.Mutex
+	mutex         sync.Mutex
 	activeWorkers int
 )
 
@@ -58,42 +58,36 @@ func main() {
 	if err != nil {
 		fmt.Print("не подлючен к редис")
 	}
+	fmt.Println(config.MaxGorutines)
 
 	workerSemaphore := make(chan struct{}, config.MaxGorutines)
-
 	go sendHeartbeat(client, "http://server:8041/setstatus", id, config.MaxGorutines)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := clientRedis.Ping(ctx).Err(); err != nil {
+	if err := clientRedis.Ping(context.Background()).Err(); err != nil {
 		fmt.Print("не подлючен к редис")
 	}
 	fmt.Println("Успешное подключение к Redis")
 
 	for {
 		expression, err := LockQueue("my_queue", clientRedis)
-		if err == fmt.Errorf("очередь пуста") || err != nil {
+		if err != nil {
 			continue
 		}
+
 		// Получаем значение из очереди
 		fmt.Println("значение получено")
 		//mutex.Lock()
 
-		activeWorkers++
-		fmt.Println("доп канала ", expression.Num1, expression.Num2)
+		
 		//mutex.Unlock()
 		fmt.Println("мьютексы пройдены?")
 		workerSemaphore <- struct{}{}
-		fmt.Println("после канала ", expression.Num1, expression.Num2)
+		
+		fmt.Println("после канала ", expression.Id)
 		go func(expression SubEx, clientRedis *redis.Client) {
-			defer func() {
-
-				<-workerSemaphore
-				//mutex.Lock()
-				activeWorkers--
-				//mutex.Unlock()
-			}()
+			fmt.Println("Перед дефером")
+			activeWorkers++
+			fmt.Println("вошло в горутину")
 			var res float64
 			var Error string
 			switch expression.Operator {
@@ -137,7 +131,21 @@ func main() {
 				fmt.Print("не удалось замарщалить результат")
 			}
 			fmt.Print(res)
-			clientRedis.LPush(context.Background(), expression.Id, out)
+			err = clientRedis.LPush(context.Background(), expression.Id, out).Err()
+			if err != nil {
+				fmt.Print("Bad Gorutine")
+			} else {
+				fmt.Println("Данные успешно отправлены в очередь")
+			}
+
+			mutex.Lock()
+			activeWorkers--
+			mutex.Unlock()
+			fmt.Println("Before reading from workerSemaphore")
+			<-workerSemaphore
+			fmt.Println("After reading from workerSemaphore")
+
+			return
 
 		}(expression, clientRedis)
 
@@ -193,14 +201,13 @@ func LockQueue(queueName string, client *redis.Client) (SubEx, error) {
 		// Снимаем блокировку после выполнения задачи
 		clientRedis.Del(ctx, lockKey)
 	}(client)
-
-	result, err := client.LPop(ctx, queueName).Result()
-	if err != nil {
-		return SubEx{}, fmt.Errorf("ошибка в очереди")
-	}
 	queueLen, err := client.LLen(ctx, queueName).Result()
 	if err != nil {
 		return SubEx{}, fmt.Errorf("ошибка при получении длины очереди: %w", err)
+	}
+	result, err := client.LPop(ctx, queueName).Result()
+	if err != nil {
+		return SubEx{}, fmt.Errorf("ошибка в очереди")
 	}
 
 	if queueLen == 0 {

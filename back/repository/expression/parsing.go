@@ -3,7 +3,6 @@ package expression
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"fmt"
 
@@ -49,10 +48,13 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 	if err != nil {
 		return nil, fmt.Errorf("ошибка вывода из джейсона")
 	}
+	fmt.Println(fmt.Sprint(id))
+	colex := 0
 	maxTime := max(config.Construction, config.Minus, config.Division, config.Plus, config.Multiplication)
 	fmt.Println("начало обработки выражения  ")
 	for len(expression) != 1 {
 		for index := 0; index < len(expression)-2; index++ {
+
 			if !strings.ContainsAny(fmt.Sprint(expression[index].Value), "+-/*^.") && !strings.ContainsAny(fmt.Sprint(expression[index+1].Value), "+-/*^.") && strings.ContainsAny(fmt.Sprint(expression[index+2].Value), "+-/*^") {
 				err := r.EnqueueMessage("my_queue", SubEx{
 					Num1:     float64(expression[index].Value.(int)),
@@ -64,6 +66,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 				if err != nil {
 					fmt.Println("НЕ ОТПРАВИЛОСЬ В ОЧЕРЕДЬ ", err)
 				}
+				colex++
 				fmt.Printf("отправлено в очередь %d %d %d", expression[index].Value, expression[index+1].Value, expression[index+2].Value)
 				expression[index].Value = "."
 				expression[index+1].Value = "."
@@ -73,12 +76,18 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 
 		}
 		//тут будет тайслип на время выполнения операций
-		time.Sleep(time.Duration(maxTime+2) * time.Second)
-		for {
+
+		for colex != 0 {
+
 			newEX, err := r.DequeueMessage(fmt.Sprint(id))
+			if err == fmt.Errorf("очередь пустая") {
+				continue
+			}
 			if err != nil {
 				break
 			}
+
+			colex--
 			if newEX.Error == "err" {
 				return nil, fmt.Errorf("встречено деление на ноль")
 			}
@@ -112,10 +121,19 @@ func (r *RedisRepo) EnqueueMessage(name string, subEx SubEx, maxTime int) error 
 		return fmt.Errorf("ошибка в очереди")
 
 	}
-	r.Client.Expire(context.Background(), name, time.Duration(maxTime)*time.Minute)
+
 	return nil
 }
 func (r *RedisRepo) DequeueMessage(name string) (Result, error) {
+	queueLen, err := r.Client.LLen(context.Background(), name).Result()
+	if err != nil {
+		return Result{}, fmt.Errorf("ошибка при получении длины очереди: %w", err)
+	}
+	fmt.Println("принял значение в очереди до проверки")
+	if queueLen == 0 {
+		return Result{}, fmt.Errorf("очередь пустая")
+	}
+	fmt.Println("принял значение в очереди аосле ")
 	result, err := r.Client.LPop(context.Background(), name).Result()
 	if err != nil {
 		return Result{}, fmt.Errorf("ошибка в очереди: %v", err)

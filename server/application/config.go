@@ -17,6 +17,7 @@ func (a *App) loadConfig() {
 		Division:       100,
 		Multiplication: 100,
 		Construction:   100,
+		MaxGorutines:   10,
 	}
 	res, err := json.Marshal(currentConfig)
 	if err != nil {

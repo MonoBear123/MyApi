@@ -93,7 +93,7 @@ func (o *Expression) GetAgentStatus(w http.ResponseWriter, r *http.Request) {
 
 			o.Repo.DeleteAgent(fmt.Sprint(onestatus.Id))
 		} else {
-			w.Write([]byte("Агент жив\n"))
+			w.Write([]byte(fmt.Sprintf("Агент жив\n Колчесвто горутин в обработке %d из %d", onestatus.NumOfWorkers, onestatus.MaxNumWorkers)))
 		}
 	}
 }
