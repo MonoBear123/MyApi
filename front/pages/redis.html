@@ -1,0 +1,8 @@
+<div>
+    <h3>Список Агентов</h3>
+    <ul>
+        {{range $key, $value := .}}
+        <li> {{ $key }}: {{ $value.Status }} Агент использует {{ $value.NumOfWorkers }} горутин из {{ $value.MaxNumWorkers }}</li>
+        {{end}}
+    </ul>
+</div>

@@ -19,6 +19,7 @@ type Requert struct {
 	Time          time.Time `json:"time"`
 	NumOfWorkers  int       `json:"numofworkers"`
 	MaxNumWorkers int       `json:"maxnumworkers"`
+	
 }
 type Config struct {
 	Plus           int `json:"+"`

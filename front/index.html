@@ -1,0 +1,55 @@
+<!-- set_expression.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Set Expression</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body>
+    <h1>Set Expression</h1>
+    <div>
+        <button hx-get="/getstatus" hx-target="#status" hx-swap="innerHTML">Список агентов</button>
+
+    </div>
+    <div id="status" class="p-6 m-6">
+
+
+    </div>
+    <div id="set" class="">
+        <label for="expression">Введите выражение:</label>
+        <input type="text" id="expressionInput" name="expression" required>
+        <button type="button" onclick="sendExpression()">Отправить выражение</button>
+    </div>
+    <button hx-het="/set" hx-swap="outerHTML">Введите выражение</button>
+   
+    <button hx-get="/config" hx-swap="outerHTML">Конфиг</button>
+    <script>
+        function sendExpression() {
+            var expression = document.getElementById("expressionInput").value;
+
+            // Посылаем выражение на сервер
+            fetch("/set", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ expression: expression })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Обновляем содержимое элемента с id "status"
+                    document.getElementById("status").innerHTML = data.message; // Подставь правильное поле из ответа сервера
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+    </script>
+</body>
+
+</html>

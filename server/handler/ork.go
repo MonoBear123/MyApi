@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+
 	"math/rand"
 	"net/http"
 	"time"
@@ -21,17 +22,7 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Expression1 string `json:"expression"`
 	}
-	var fileName = "static/set_ex.html"
-	shablon, err := template.ParseFiles(fileName)
-	if err != nil {
-		w.WriteHeader(http.StatusRequestURITooLong)
-	}
-	err = shablon.ExecuteTemplate(w, fileName, nil)
-	if err != nil {
-		w.WriteHeader(http.StatusRequestURITooLong)
-	}
-	Exp := r.FormValue("expression")
-	fmt.Println(Exp)
+
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "Неверный формат запроса", http.StatusBadRequest)
 		return
@@ -65,17 +56,18 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("не прошло раскидку субвыражений")
 	}
 	fmt.Println("прошло раскидку субвыражений")
-	res, err := json.Marshal(out.Expression)
+	res, err := json.Marshal(out.Expression + "=" + fmt.Sprint(outres[0].Value))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
 		w.Write([]byte("ошибка не в базе данных"))
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 
-	w.Write(res)
-	w.Write([]byte("=" + fmt.Sprint(outres[0].Value)))
-	w.WriteHeader(http.StatusCreated)
+	// Отправляем JSON-ответ обратно клиенту
+	json.NewEncoder(w).Encode(res)
+
 }
 
 func (o *Expression) SetAgentStatus(w http.ResponseWriter, r *http.Request) {
@@ -95,18 +87,28 @@ func (o *Expression) SetAgentStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (o *Expression) GetAgentStatus(w http.ResponseWriter, r *http.Request) {
+	ctx := make(map[string]interface{})
 	status := o.Repo.AgentALLFind(r.Context())
-	for _, onestatus := range status {
+	for i, onestatus := range status {
 		timeOld := time.Since(onestatus.Time)
 
 		if timeOld > time.Second*30 {
-			w.Write([]byte("Агент умер\n"))
-
+			ctx[fmt.Sprintf("Агент %d", i+1)] = model.Requert{
+				Status:        "Отключился",
+				MaxNumWorkers: onestatus.MaxNumWorkers,
+				NumOfWorkers:  onestatus.NumOfWorkers,
+			}
 			o.Repo.DeleteAgent(fmt.Sprint(onestatus.Id))
 		} else {
-			w.Write([]byte(fmt.Sprintf("Агент жив\n Колчесвто горутин в обработке %d из %d", onestatus.NumOfWorkers, onestatus.MaxNumWorkers)))
+			ctx[fmt.Sprintf("Агент %d", i+1)] = model.Requert{
+				Status:        "ОК",
+				MaxNumWorkers: onestatus.MaxNumWorkers,
+				NumOfWorkers:  onestatus.NumOfWorkers,
+			}
 		}
 	}
+	t, _ := template.ParseFiles("front/pages/redis.html")
+	t.Execute(w, ctx)
 }
 func (o *Expression) UpdateConfigHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
