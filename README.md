@@ -28,7 +28,6 @@
 
 # Как собрать проект <a name="assembly"></a>
 
-# Использование
 ## Требования:
 #### Windows
 - Docker Desktop
