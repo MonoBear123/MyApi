@@ -11,58 +11,65 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         .active {
-            border: 2px solid blue;
+            border: 2px solid rgb(255, 0, 0);
+            background-color: aliceblue;
+            text-emphasis-color: rgb(255, 0, 0)
         }
     </style>
 </head>
 
 <body>
+    <div class="conteiner mx-auto px-2">
 
-    <div class="flex flex-row space-x-4">
-        <button hx-get="/getstatus" hx-target="#status" hx-swap="HTML" onclick="highlightButton('getstatusBtn')">Список
-            агентов</button>
+        <div class="flex flex-row space-x-4 px=1 mx=1 border=2 border-black">
+            <button class="bg-red-700 p-3 border-black border-2 text-whilte" hx-get="/getstatus" hx-target="#status"
+                hx-swap="HTML" onclick="highlightButton('getstatusBtn')">Список
+                агентов</button>
 
-    </div>
-    <div id="status" class="p-6 m-6">
+        </div>
 
-
-    </div>
-    <div id="set" class="flex flex-row space-x-4">
-        <label for="expression">Введите выражение:</label>
-        <input type="text" id="expressionInput" name="expression" required>
-        <button type="button" onclick="sendExpression()">Отправить выражение</button>
-    </div>
-
-
-    <button type="button" onclick="openConfigWindow()">Открыть окно конфигурации</button>
-
-    <!-- Окно конфигурации -->
-    <div id="configWindow" class="hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-75">
-        <div class="p-8 bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <h2 class="text-xl font-bold mb-4">Конфигурация</h2>
-            <form id="configForm">
-                <!-- Сюда добавьте поля для ввода (6 строчек, *^/+- и gorutines) -->
-                <!-- Пример: -->
-                <label for="line1">Время сложения:</label>
-                <input type="text" id="line1" name="+" required>
-                <label for="line1">Время вычитания:</label>
-                <input type="text" id="line2" name="-" required>
-                <label for="line1">Время умножения:</label>
-                <input type="text" id="line3" name="*" required>
-                <label for="line1">Время деления:</label>
-                <input type="text" id="line4" name="/" required>
-                <label for="line1">Время возведения в степень:</label>
-                <input type="text" id="line5" name="^" required>
-
-
-
-
-                <button type="button" onclick="submitConfig()">Отправить конфигурацию</button>
+        <div id="set" class="flex flex-row space-x-4 mt-4 mb-4">
+            <form id="expressionForm" onsubmit="event.preventDefault(); sendExpression();">
+                <label for="expression">Введите выражение:</label>
+                <input type="text" id="expressionInput" name="expression" required>
+                <button class="bg-red-700 p-3 border-black border-2" type="submit">Отправить выражение</button>
             </form>
-            <button type="button" onclick="closeConfigWindow()">Закрыть</button>
+        </div>
+        <div id="status">
+        </div>
+
+        <button class="bg-red-700 p-3 border-black border-2 text-whilte " type="button"
+            onclick="openConfigWindow()">Открыть окно конфигурации</button>
+
+        <!-- Окно конфигурации -->
+        <div id="configWindow" class="hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-75">
+            <div class="p-8 bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <h2 class="text-xl font-bold mb-4">Конфигурация</h2>
+                <form id="configForm">
+                    <!-- Сюда добавьте поля для ввода (6 строчек, *^/+- и gorutines) -->
+                    <!-- Пример: -->
+                    <label for="line1">Время сложения:</label>
+                    <input type="text" id="line1" name="+" required>
+                    <label for="line1">Время вычитания:</label>
+                    <input type="text" id="line2" name="-" required>
+                    <label for="line1">Время умножения:</label>
+                    <input type="text" id="line3" name="*" required>
+                    <label for="line1">Время деления:</label>
+                    <input type="text" id="line4" name="/" required>
+                    <label for="line1">Время возведения в степень:</label>
+                    <input type="text" id="line5" name="^" required>
+
+
+
+
+                    <button class="bg-red-700 p-3 border-black border-2 text-whilte" type="button"
+                        onclick="submitConfig()">Отправить конфигурацию</button>
+                </form>
+                <button class="bg-red-700 p-3 border-black border-2 text-whilte" type="button"
+                    onclick="closeConfigWindow()">Закрыть</button>
+            </div>
         </div>
     </div>
-
     <script>
         function openConfigWindow() {
             document.getElementById("configWindow").classList.remove("hidden");
@@ -94,7 +101,6 @@
         function sendExpression() {
             var expression = document.getElementById("expressionInput").value;
 
-            // Посылаем выражение на сервер
             fetch("/set", {
                 method: "POST",
                 headers: {
@@ -102,10 +108,12 @@
                 },
                 body: JSON.stringify({ expression: expression })
             })
-                .then(response => response.json())
+                .then(response => response.text())
                 .then(data => {
-                    // Обновляем содержимое элемента с id "status"
-                    document.getElementById("status").innerHTML = data.message; // Подставь правильное поле из ответа сервера
+                    var statusElement = document.getElementById("status");
+                    var listItem = document.createElement("li");
+                    listItem.textContent = data;
+                    statusElement.appendChild(listItem);
                 })
                 .catch(error => {
                     console.error("Error:", error);

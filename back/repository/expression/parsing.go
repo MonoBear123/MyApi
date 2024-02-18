@@ -35,7 +35,7 @@ func ParseExpression(expr string) ([]*shuntingYard.RPNToken, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("прошло обработку")
+
 	return postfixTokens, nil
 }
 func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64, ex string) ([]*shuntingYard.RPNToken, error) {
@@ -51,7 +51,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 
 	colex := 0
 	maxTime := max(config.Construction, config.Minus, config.Division, config.Plus, config.Multiplication)
-	fmt.Println("начало обработки выражения  ")
+
 	for len(expression) != 1 {
 		for index := 0; index < len(expression)-2; index++ {
 
@@ -61,13 +61,17 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 			fmt.Println()
 			if !strings.ContainsAny(fmt.Sprint(expression[index].Value), "+-/*^.") && !strings.ContainsAny(fmt.Sprint(expression[index+1].Value), "+-/*^.") && strings.ContainsAny(fmt.Sprint(expression[index+2].Value), "+-/*^") {
 				var num1, num2 float64
-				if val, ok := expression[index].Value.(int); ok {
-					// Если тип данных - int, то преобразуем в float64
+				switch val := expression[index].Value.(type) {
+				case int:
 					num1 = float64(val)
+				case float64:
+					num1 = val
 				}
-				if val2, ok := expression[index+1].Value.(int); ok {
-					// Если тип данных - int, то преобразуем в float64
-					num2 = float64(val2)
+				switch val := expression[index+1].Value.(type) {
+				case int:
+					num2 = float64(val)
+				case float64:
+					num2 = val
 				}
 				err := r.EnqueueMessage("my_queue", SubEx{
 					Num1:     num1,
