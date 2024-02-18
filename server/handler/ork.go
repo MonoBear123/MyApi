@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"math/rand"
 	"net/http"
 	"time"
@@ -20,7 +21,17 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Expression1 string `json:"expression"`
 	}
-
+	var fileName = "static/set_ex.html"
+	shablon, err := template.ParseFiles(fileName)
+	if err != nil {
+		w.WriteHeader(http.StatusRequestURITooLong)
+	}
+	err = shablon.ExecuteTemplate(w, fileName, nil)
+	if err != nil {
+		w.WriteHeader(http.StatusRequestURITooLong)
+	}
+	Exp := r.FormValue("expression")
+	fmt.Println(Exp)
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "Неверный формат запроса", http.StatusBadRequest)
 		return

@@ -1,8 +1,6 @@
 package application
 
 import (
-	"net/http"
-
 	"github.com/MonoBear123/MyApi/back/repository/expression"
 	"github.com/MonoBear123/MyApi/server/handler"
 	"github.com/go-chi/chi"
@@ -12,9 +10,6 @@ import (
 func (a *App) loadRoutes() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
-	})
 
 	router.Route("/", a.loadExpressionRoutes)
 	a.router = router
