@@ -6,44 +6,84 @@
 <head>
     <title>Set Expression</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
-        .active {
-            border: 2px solid rgb(255, 0, 0);
-            background-color: aliceblue;
-            text-emphasis-color: rgb(255, 0, 0)
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+        html, body {
+            height: 100%;
+            font-family: "Noto Sans", sans-serif;
+            padding: 0;
+            margin: 0;
+            font-size: 24px;
         }
 
-        .rounded-button {
-            border-radius: 9999px;
+        button, input {
+            font-size: inherit;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .top-button {
+            border: 1px solid black;
+            border-radius: .75rem;
             color: white;
+            background-color: #0077ff96 !important;
+            padding: 1rem;
+            flex-grow: 1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #config-window {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            background-color: #0000008e;
+            z-index: 1551;
+            display: grid;
+            place-content: center;
+        }
+
+        .config-container {
+            display: flex;
+            gap: .5rem;
+            flex-direction: column;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+        
+        #config-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        h2, ul {
+            margin: 0;
         }
     </style>
 </head>
 
 <body>
-    <div class="container mx-auto px-2">
+    <div class="container">
 
-        <div class="flex flex-row space-x-4 px-1 mx-1 border-0 border-black">
-            <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" hx-get="/getstatus"
-                hx-target="#status" hx-swap="HTML" onclick="highlightButton('getstatusBtn')">Список
-                агентов</button>
-
-            <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" type="button"
-                onclick="openConfigWindow()">Открыть окно конфигурации</button>
-
-            <button class="bg-red-700 p-3 border-black border-2 text-white rounded-button" type="button"
-                onclick="sendExpression()">Отправить выражение</button>
+        <div class="flex" style="justify-content: space-evenly; flex-grow: 1; margin-top: 0.5em; gap: 2em">
+            <button class="top-button" hx-get="/getstatus" hx-target="#status" hx-swap="HTML" onclick="highlightButton('getstatusBtn')">Список агентов</button>
+            <button class="top-button" type="button" onclick="openConfigWindow()">Открыть окно конфигурации</button>
         </div>
 
-        <div id="set" class="flex flex-row space-x-4 mt-4 mb-4">
+        <div id="set" class=">
             <form id="expressionForm">
                 <label for="expression">Введите выражение:</label>
-                <input type="text" id="expressionInput" name="expression" required>
-                <button class="bg-red-700 p-3 border-black border-2 rounded-button" type="button"
-                    onclick="sendExpression()">Отправить выражение</button>
+                <input type="text" id="expressionInput" name="expression" required class="border-1 border-black border-radius-0.5">
+                <button class="top-button" type="button" onclick="sendExpression()" style="padding: 0.5em">Отправить выражение</button>
             </form>
         </div>
 
@@ -51,11 +91,11 @@
         </div>
 
         <!-- Окно конфигурации -->
-        <div id="configWindow" class="hidden fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-75">
-            <div class="p-8 bg-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                <h2 class="text-xl font-bold mb-4">Конфигурация</h2>
-                <form id="configForm">
-                    <ul>
+        <div id="config-window" class="hidden">
+            <div class="config-container">
+                <form id="config-form">
+                    <h2 class="">Конфигурация</h2>
+                    <ul style="display: flex; flex-direction: column; gap: 0.3s5rem; align-items: start;">
                         <li>
                             <label for="line1">Время сложения:</label>
                             <input type="text" id="line1" name="+" required>
@@ -87,11 +127,11 @@
     </div>
     <script>
         function openConfigWindow() {
-            document.getElementById("configWindow").classList.remove("hidden");
+            document.getElementById("config-window").classList.remove("hidden");
         }
 
         function closeConfigWindow() {
-            document.getElementById("configWindow").classList.add("hidden");
+            document.getElementById("config-window").classList.add("hidden");
         }
 
         function submitConfig() {
