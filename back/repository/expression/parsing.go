@@ -60,7 +60,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 					Num1:     float64(expression[index].Value.(int)),
 					Num2:     float64(expression[index+1].Value.(int)),
 					Operator: expression[index+2].Value.(string),
-					Id:       fmt.Sprint(id),
+					Id:       "qeue:"+fmt.Sprint(id),
 					Index:    index,
 				}, maxTime)
 				if err != nil {
@@ -125,7 +125,7 @@ func (r *RedisRepo) EnqueueMessage(name string, subEx SubEx, maxTime int) error 
 	return nil
 }
 func (r *RedisRepo) DequeueMessage(name string) (Result, error) {
-	result, err := r.Client.BLPop(context.Background(), 0, name).Result()
+	result, err := r.Client.BLPop(context.Background(), 0, "qeue:"+name).Result()
 	if err != nil {
 		return Result{}, fmt.Errorf("ошибка при ожидании значения из очереди: %v", err)
 	}

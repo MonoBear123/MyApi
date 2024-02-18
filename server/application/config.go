@@ -23,7 +23,7 @@ func (a *App) loadConfig() {
 	if err != nil {
 		log.Fatal("ошибка в маршалинге конфига")
 	}
-	time.Sleep(15 * time.Second)
+	time.Sleep(5 * time.Second)
 	err = a.rdb.Set(context.Background(), "config", string(res), 0).Err()
 	if err != nil {
 		log.Fatal(" стандартные значение конфига не установились")

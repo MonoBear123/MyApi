@@ -39,6 +39,7 @@ type SubEx struct {
 }
 
 func main() {
+
 	client := &http.Client{}
 	options := &redis.Options{
 		Addr: "redis:6379", // замените на реальный адрес
@@ -131,7 +132,7 @@ func main() {
 				fmt.Print("не удалось замарщалить результат")
 			}
 			fmt.Print(res)
-			err = clientRedis.LPush(context.Background(), expression.Id, string(out)).Err()
+			err = clientRedis.LPush(context.Background(), "qeue:"+expression.Id, string(out)).Err()
 			if err != nil {
 				fmt.Printf("Ошибка при отправке данных в очередь: %v\n", err)
 			} else {
