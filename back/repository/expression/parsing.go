@@ -60,7 +60,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 					Num1:     float64(expression[index].Value.(int)),
 					Num2:     float64(expression[index+1].Value.(int)),
 					Operator: expression[index+2].Value.(string),
-					Id:       "qeue:"+fmt.Sprint(id),
+					Id:       "qeue:" + fmt.Sprint(id),
 					Index:    index,
 				}, maxTime)
 				if err != nil {
@@ -78,14 +78,16 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 		//тут будет тайслип на время выполнения операций
 
 		for colex != 0 {
-
+			fmt.Println(colex)
+			fmt.Println("ждет отправления")
 			newEX, err := r.DequeueMessage(fmt.Sprint(id))
 			if err != nil {
 				fmt.Println(err)
 				break
 			}
-
+			fmt.Println(colex)
 			colex--
+			fmt.Println(colex)
 			if newEX.Error == "err" {
 				return nil, fmt.Errorf("встречено деление на ноль")
 			}

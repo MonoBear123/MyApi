@@ -146,7 +146,7 @@ func main() {
 			<-workerSemaphore
 			fmt.Println("After reading from workerSemaphore")
 
-			return
+	
 
 		}(expression, clientRedis)
 
