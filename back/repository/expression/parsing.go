@@ -48,13 +48,17 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 	if err != nil {
 		return nil, fmt.Errorf("ошибка вывода из джейсона")
 	}
-	fmt.Println(fmt.Sprint(id))
+
 	colex := 0
 	maxTime := max(config.Construction, config.Minus, config.Division, config.Plus, config.Multiplication)
 	fmt.Println("начало обработки выражения  ")
 	for len(expression) != 1 {
 		for index := 0; index < len(expression)-2; index++ {
-			fmt.Println(expression)
+
+			for _, num := range expression {
+				fmt.Print("Вернулись из агента ", num.Value)
+			}
+			fmt.Println()
 			if !strings.ContainsAny(fmt.Sprint(expression[index].Value), "+-/*^.") && !strings.ContainsAny(fmt.Sprint(expression[index+1].Value), "+-/*^.") && strings.ContainsAny(fmt.Sprint(expression[index+2].Value), "+-/*^") {
 				var num1, num2 float64
 				if val, ok := expression[index].Value.(int); ok {
@@ -88,7 +92,7 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 
 		for colex != 0 {
 			fmt.Println(colex)
-			fmt.Println("ждет отправления")
+
 			newEX, err := r.DequeueMessage(fmt.Sprint(id))
 			if err != nil {
 				fmt.Println(err)
@@ -137,7 +141,6 @@ func (r *RedisRepo) DequeueMessage(name string) (Result, error) {
 	if err != nil {
 		return Result{}, fmt.Errorf("ошибка при ожидании значения из очереди: %v", err)
 	}
-	fmt.Println("принял значение в очереди аосле ")
 
 	var expression Result
 	err = json.Unmarshal([]byte(result[1]), &expression)

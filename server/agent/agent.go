@@ -89,19 +89,19 @@ func main() {
 		//mutex.Lock()
 
 		//mutex.Unlock()
-		fmt.Println("мьютексы пройдены?")
+		fmt.Println(expression.Num1, " ", expression.Num2)
 		workerSemaphore <- struct{}{}
 
 		fmt.Println("после канала ", expression.Id)
 		go func(expression SubEx, clientRedis *redis.Client) {
-			fmt.Println("Перед дефером")
+			
 			activeWorkers++
-			fmt.Println("вошло в горутину")
+			
 			var res float64
 			var Error string
 			switch expression.Operator {
 			case "/":
-				fmt.Print("запустился на делении")
+				fmt.Println("запустился на делении")
 				if expression.Num2 == 0 {
 					Error = "err"
 				}
@@ -109,12 +109,12 @@ func main() {
 				res = expression.Num1 / expression.Num2
 
 			case "*":
-				fmt.Print("запустился на произведении")
+				fmt.Println("запустился на произведении")
 				time.Sleep(time.Second * time.Duration(config2.Multiplication))
 				res = expression.Num1 * expression.Num2
 
 			case "-":
-				fmt.Print("запустился на минусе")
+				fmt.Println("запустился на минусе")
 				time.Sleep(time.Second * time.Duration(config2.Minus))
 
 				res = expression.Num1 - expression.Num2
@@ -129,7 +129,7 @@ func main() {
 
 				res = math.Pow(expression.Num1, expression.Num2)
 			default:
-				fmt.Print("не найден оператор")
+				fmt.Println("не найден оператор")
 			}
 
 			out, err := json.Marshal(Result{
@@ -141,7 +141,7 @@ func main() {
 				fmt.Print("не удалось замарщалить результат")
 			}
 			fmt.Println(res)
-			fmt.Println(expression.Id)
+		
 			err = clientRedis.LPush(context.Background(), expression.Id, string(out)).Err()
 			if err != nil {
 				fmt.Printf("Ошибка при отправке данных в очередь: %v\n", err)
@@ -152,10 +152,9 @@ func main() {
 			mutex.Lock()
 			activeWorkers--
 			mutex.Unlock()
-			fmt.Println("Before reading from workerSemaphore")
+		
 			<-workerSemaphore
-			fmt.Println("After reading from workerSemaphore")
-
+		
 		}(expression, clientRedis)
 
 	}
