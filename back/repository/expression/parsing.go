@@ -80,10 +80,8 @@ func (r *RedisRepo) Distribution(expression []*shuntingYard.RPNToken, id uint64,
 		for colex != 0 {
 
 			newEX, err := r.DequeueMessage(fmt.Sprint(id))
-			if err == fmt.Errorf("очередь пустая") {
-				continue
-			}
 			if err != nil {
+				fmt.Println(err)
 				break
 			}
 
@@ -118,6 +116,8 @@ func (r *RedisRepo) EnqueueMessage(name string, subEx SubEx, maxTime int) error 
 	}
 	err = r.Client.LPush(ctx, name, string(res)).Err()
 	if err != nil {
+		fmt.Println("не попал в очередб")
+
 		return fmt.Errorf("ошибка в очереди")
 
 	}
@@ -125,22 +125,14 @@ func (r *RedisRepo) EnqueueMessage(name string, subEx SubEx, maxTime int) error 
 	return nil
 }
 func (r *RedisRepo) DequeueMessage(name string) (Result, error) {
-	queueLen, err := r.Client.LLen(context.Background(), name).Result()
+	result, err := r.Client.BLPop(context.Background(), 0, name).Result()
 	if err != nil {
-		return Result{}, fmt.Errorf("ошибка при получении длины очереди: %w", err)
-	}
-	fmt.Println("принял значение в очереди до проверки")
-	if queueLen == 0 {
-		return Result{}, fmt.Errorf("очередь пустая")
+		return Result{}, fmt.Errorf("ошибка при ожидании значения из очереди: %v", err)
 	}
 	fmt.Println("принял значение в очереди аосле ")
-	result, err := r.Client.LPop(context.Background(), name).Result()
-	if err != nil {
-		return Result{}, fmt.Errorf("ошибка в очереди: %v", err)
-	}
 
 	var expression Result
-	err = json.Unmarshal([]byte(result), &expression)
+	err = json.Unmarshal([]byte(result[1]), &expression)
 	if err != nil {
 		return Result{}, fmt.Errorf("ошибка распаковки JSON: %v", err)
 	}

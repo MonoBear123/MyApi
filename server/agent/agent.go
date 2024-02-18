@@ -71,6 +71,7 @@ func main() {
 	for {
 		expression, err := LockQueue("my_queue", clientRedis)
 		if err != nil {
+			fmt.Println(err)
 			continue
 		}
 
@@ -132,7 +133,7 @@ func main() {
 			fmt.Print(res)
 			err = clientRedis.LPush(context.Background(), expression.Id, string(out)).Err()
 			if err != nil {
-				fmt.Print("Bad Gorutine")
+				fmt.Printf("Ошибка при отправке данных в очередь: %v\n", err)
 			} else {
 				fmt.Println("Данные успешно отправлены в очередь")
 			}
@@ -200,22 +201,14 @@ func LockQueue(queueName string, client *redis.Client) (SubEx, error) {
 		// Снимаем блокировку после выполнения задачи
 		clientRedis.Del(ctx, lockKey)
 	}(client)
-	queueLen, err := client.LLen(ctx, queueName).Result()
-	if err != nil {
-		return SubEx{}, fmt.Errorf("ошибка при получении длины очереди: %w", err)
-	}
-	result, err := client.LPop(ctx, queueName).Result()
-	if err != nil {
-		return SubEx{}, fmt.Errorf("ошибка в очереди")
-	}
 
-	if queueLen == 0 {
-		// Очередь пуста, возвращаем ошибку или обрабатываем ситуацию по вашему усмотрению
-		return SubEx{}, fmt.Errorf("очередь пуста")
+	result, err := client.BLPop(ctx, 0, queueName).Result()
+	if err != nil {
+		return SubEx{}, fmt.Errorf("ошибка при ожидании значения из очереди: %v", err)
 	}
 	expression := SubEx{}
 
-	err = json.Unmarshal([]byte(result), &expression)
+	err = json.Unmarshal([]byte(result[1]), &expression)
 	if err != nil {
 		return SubEx{}, fmt.Errorf("ошибка распаковки JSON: %v", err)
 	}
