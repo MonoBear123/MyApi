@@ -94,15 +94,15 @@ func main() {
 
 		fmt.Println("после канала ", expression.Id)
 		go func(expression SubEx, clientRedis *redis.Client) {
-			
+
 			activeWorkers++
-			
+
 			var res float64
 			var Error string
 			switch expression.Operator {
 			case "/":
 				fmt.Println("запустился на делении")
-				if expression.Num2 == 0 {
+				if expression.Num2 == 0.0 {
 					Error = "err"
 				}
 				time.Sleep(time.Second * time.Duration(config2.Division))
@@ -141,7 +141,7 @@ func main() {
 				fmt.Print("не удалось замарщалить результат")
 			}
 			fmt.Println(res)
-		
+
 			err = clientRedis.LPush(context.Background(), expression.Id, string(out)).Err()
 			if err != nil {
 				fmt.Printf("Ошибка при отправке данных в очередь: %v\n", err)
@@ -152,9 +152,9 @@ func main() {
 			mutex.Lock()
 			activeWorkers--
 			mutex.Unlock()
-		
+
 			<-workerSemaphore
-		
+
 		}(expression, clientRedis)
 
 	}

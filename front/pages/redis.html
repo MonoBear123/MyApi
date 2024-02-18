@@ -20,8 +20,7 @@
     <ul style="list-style-type: none; padding: 0;">
         {{range $key, $value := .}}
         <li>
-            {{ $key }}: {{ $value.Status }} Агент использует {{ $value.NumOfWorkers }}/{{
-            $value.MaxNumWorkers }}
+            {{ $key }}: {{ $value.Status }} Агент использует {{ $value.NumOfWorkers }}/{{$value.MaxNumWorkers }}
         </li>
         {{end}}
     </ul>

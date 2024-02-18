@@ -58,7 +58,6 @@ func (o *Expression) SetExpression(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	fmt.Println(out.Expression + "=" + fmt.Sprint(outres[0].Value))
 
 	w.Write([]byte(out.Expression + "=" + fmt.Sprint(outres[0].Value)))
 	o.Repo.DeleteExpression(fmt.Sprint(id))
