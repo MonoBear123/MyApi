@@ -41,13 +41,15 @@ docker compose up
 ```
 
 # Заходим на  localhost:8041
-
+ Если html не работает, то отправляем запрос curl -X POST -H "Content-Type: application/json" -d "{\"expression\": \"2 + 2\"}" http://localhost:8041/set для отправки выражения 
+ 
+ Для получения статуса агентов curl localhost:8041/getstatus
 # Тесты <a name="Test"></a> 
 
 1. 1+1=2
 2. 5*3=15
-3. 3^4
-4. (5+4)*3/2
+3. 3^4=81
+4. (5+4)*3/2=13,5
 5. 2/0
  
 
